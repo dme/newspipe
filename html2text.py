@@ -1,23 +1,29 @@
 """html2text: Turn HTML into equivalent Markdown-structured text."""
-__version__ = "2.11"
+__version__ = "2.21"
 __author__ = "Aaron Swartz (me@aaronsw.com)"
 __copyright__ = "(C) 2004 Aaron Swartz. GNU GPL 2."
+__contributors__ = ["Martin 'Joey' Schulze", "Ricardo Reyes"]
 
 # TODO:
 #   Support decoded entities with unifiable.
-#	Word wrap. 
 #	Fix :s using buffering
-#	Relative URl resolution
+#	Relative URL resolution
 
-import re, sys, urllib, htmlentitydefs, codecs, StringIO
+import re, sys, urllib, htmlentitydefs, codecs, StringIO, types
 import sgmllib
 sgmllib.charref = re.compile('&#([xX]?[0-9a-fA-F]+)[^0-9a-fA-F]')
+
+try: from textwrap import wrap
+except: pass
 
 # Use Unicode characters instead of their ascii psuedo-replacements
 UNICODE_SNOB = 0
 
 # Put the links after each paragraph instead of at the end.
 LINKS_EACH_PARAGRAPH = 0
+
+# Wrap long lines at position. 0 for no wrapping. (Requires Python 2.3.)
+BODY_WIDTH = 0
 
 ### Entity Nonsense ###
 
@@ -83,12 +89,44 @@ def fixattrs(attrs):
 
 ### End Entity Nonsense ###
 
+def onlywhite(line):
+	"""Return true if the line does only consist of whitespace characters."""
+	for c in line:
+		if c is not ' ' and c is not '	':
+			return c is ' '
+	return line
+
+def optwrap(text):
+	"""Wrap all paragraphs in the provided text."""
+	if not BODY_WIDTH:
+		return text
+	
+	assert wrap # Requires Python 2.3.
+	result = ''
+	newlines = 0
+	for para in text.split("\n"):
+		if len(para) > 0:
+			if para[0] is not ' ' and para[0] is not '-' and para[0] is not '*':
+				for line in wrap(para, BODY_WIDTH):
+					result += line + "\n"
+				result += "\n"
+				newlines = 2
+			else:
+				if not onlywhite(para):
+					result += para + "\n"
+					newlines = 1
+		else:
+			if newlines < 2:
+				result += "\n"
+				newlines += 1
+	return result
+
 def hn(tag):
 	if tag[0] == 'h' and len(tag) == 2:
 		try:
 			n = int(tag[1])
 			if n in range(1, 10): return n
-		except ValueError: return False
+		except ValueError: return 0
 
 class _html2text(sgmllib.SGMLParser):
 	def __init__(self, out=sys.stdout.write):
@@ -112,7 +150,7 @@ class _html2text(sgmllib.SGMLParser):
 		self.lastWasNL = 0
 	
 	def outtextf(self, s): 
-		if type(s) is str: s = s.decode('utf8')
+		if type(s) is type(''): s = codecs.utf_8_decode(s)[0]
 		self.outtext += s
 	
 	def close(self):
@@ -134,40 +172,29 @@ class _html2text(sgmllib.SGMLParser):
 	
 	def unknown_endtag(self, tag):
 		self.handle_tag(tag, None, 0)
+		
+ 	def previousIndex(self, attrs):
+ 		""" returns the index of certain set of attributes (of a link) in the
+ 			self.a list
+ 
+ 			If the set of attributes is not found, returns None
+ 		"""
+ 		if not attrs.has_key('href'): return None
+ 		
+ 		i = -1
+ 		for a in self.a:
+ 			i += 1
+ 			match = 0
+ 			
+ 			if a.has_key('href') and a['href'] == attrs['href']:
+ 				if a.has_key('title') or attrs.has_key('title'):
+ 						if (a.has_key('title') and attrs.has_key('title') and
+ 						    a['title'] == attrs['title']):
+ 							match = True
+ 				else:
+ 					match = True
 
-	def previousIndex(self, attrs):
-		""" returns the index of certain set of attributes (of a link) in the
-			self.a list
-
-			If the set of attributes is not found, returns None
-		"""
-
-		for i, a in enumerate(self.a):
-			if a.has_key('href') and a['href'] == attrs['href']:
-				if a.has_key('alt'):
-					if attrs.has_key('alt'):
-						if a['alt'] == attrs['alt']:
-							match = True
-						else:
-							match = False
-						# end if
-					else:
-						match = False
-					# end if
-				else:
-					match = True
-				# end if
-			else:
-				match = False
-			# end if
-
-			if match:
-				return i
-			# end if
-		# end for
-
-		return None
-	# end def    
+ 			if match: return i
 
 	def handle_tag(self, tag, attrs, start):
 		attrs = fixattrs(attrs)
@@ -179,6 +206,11 @@ class _html2text(sgmllib.SGMLParser):
 		if tag in ['p', 'div']: self.p()
 		
 		if tag == "br" and start: self.o("  \n")
+
+		if tag == "hr" and start:
+			self.p()
+			self.o("* * *")
+			self.p()
 
 		if tag in ["head", "style", 'script']: 
 			if start: self.quiet += 1
@@ -198,7 +230,9 @@ class _html2text(sgmllib.SGMLParser):
 		
 		if tag == "a":
 			if start:
-				attrs = dict(attrs)
+				attrsD = {}
+				for (x, y) in attrs: attrsD[x] = y
+				attrs = attrsD
 				if attrs.has_key('href'): 
 					self.astack.append(attrs)
 					self.o("[")
@@ -209,44 +243,39 @@ class _html2text(sgmllib.SGMLParser):
 					a = self.astack.pop()
 					if a:
 						i = self.previousIndex(a)
-						if (i is not None):
-							number = i+1
+						if i is not None:
 							a = self.a[i]
 						else:
 							self.acount += 1
-							number = self.acount
 							a['count'] = self.acount
 							a['outcount'] = self.outcount
 							self.a.append(a)
-						# end if
-						self.o("][" + `number` + "]")
+						self.o("][" + `a['count']` + "]")
 		
 		if tag == "img" and start:
-			attrs = dict(attrs)
-
+			attrsD = {}
+			for (x, y) in attrs: attrsD[x] = y
+			attrs = attrsD
 			if attrs.has_key('src'):
 				attrs['href'] = attrs['src']
+				alt = attrs.get('alt', '')
 				i = self.previousIndex(attrs)
-				if (i is not None):
-					number = i+1
+				if i is not None:
 					attrs = self.a[i]
 				else:
 					self.acount += 1
-					number = self.acount
 					attrs['count'] = self.acount
 					attrs['outcount'] = self.outcount
 					self.a.append(attrs)
-				# end if
-	
 				self.o("![")
-				if attrs.has_key('alt'): self.o(attrs['alt'])
-				self.o("]["+`number`+"]")
-	
+				self.o(alt)
+				self.o("]["+`attrs['count']`+"]")
+		
 		if tag in ["ol", "ul"]:
 			if start:
 				self.list.append({'name':tag, 'num':0})
 			else:
-				self.list.pop()
+				if self.list: self.list.pop()
 			
 			self.p()
 		
@@ -279,7 +308,6 @@ class _html2text(sgmllib.SGMLParser):
 
 	def p(self): self.p_p = 2
 	
-	
 	def o(self, data, puredata=0, force=0):
 		if not self.quiet: 
 			if puredata and not self.pre:
@@ -290,7 +318,7 @@ class _html2text(sgmllib.SGMLParser):
 			if not data and not force: return
 			
 			if self.startpre:
-				self.out(" :") #TODO: not output when already one there
+				#self.out(" :") #TODO: not output when already one there
 				self.startpre = 0
 			
 			bq = (">" * self.blockquote)
@@ -353,7 +381,7 @@ def html2text_file(html, out=sys.stdout.write):
 	return h.close()
 
 def html2text(html):
-	return html2text_file(html, None)
+	return optwrap(html2text_file(html, None))
 
 if __name__ == "__main__":
 	if sys.argv[1:]:
