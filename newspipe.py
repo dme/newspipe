@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.16 $"
+__revision__ = "$Revision: 1.17 $"
 __revision_number__ = __revision__.split()[1]
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __date__ = "2004-08-01"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.16 2004/08/18 23:57:59 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.17 2004/08/19 21:50:27 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -47,6 +47,7 @@ import urllib
 import logging
 import logging.handlers
 from urllib2 import URLError
+from email import message_from_string
 
 has_html2text = True
 try:
@@ -355,9 +356,9 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
     # return the message body
     #
     writer.lastpart()
-    msg = out.getvalue()
+    msg_source = out.getvalue()
     out.close()
-    return msg
+    return message_from_string (msg_source)
 
 def createTextEmail(text, headers):
     t = '\r\n'.join([x+': '+y for x,y in headers])
@@ -752,19 +753,13 @@ def EnviarEmails(msgs, server):
         try:
             smtp = smtplib.SMTP(server)
             smtp.set_debuglevel(0)
-            frompattern = re.compile(r'^From: .* <(.+)>', re.MULTILINE ) 
-            topattern = re.compile(r'^To: .* <(.+)>', re.MULTILINE ) 
 
             for msg in msgs:
-                # get initial "From:" and "To:" headers from message body to use in envelope
-                # only way to have a generic queue for any sender/destination pair without
-                # inserting objects in the queue (instead of just the message sources)
-                head = msg[0:512]
-                fromaddr = frompattern.search(head).group()
-                toaddr = topattern.search(head).group()
+                fromaddr = msg['From']
+                toaddr = msg['To']
 
                 # build envelope and send message
-                smtp.sendmail(fromaddr, toaddr, msg)
+                smtp.sendmail(fromaddr, toaddr, msg.as_string(unixfrom=False))
                 log.debug('mail sent to %s from %s ' % (toaddr, fromaddr))
             # end for
             smtp.quit()
