@@ -2,11 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.6 $"
+__revision__ = "$Revision: 1.7 $"
 __revision_number__ = __revision__.split()[1]
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__id__ = "$Id: cache.py,v 1.6 2004/10/10 02:14:15 reyesric Exp $"
+__id__ = "$Id: cache.py,v 1.7 2004/11/21 23:00:48 reyesric Exp $"
 
 from glob import glob
 from pickle import load, dump
@@ -21,13 +21,18 @@ import email.Utils
 import gzip
 import StringIO
 import stat
-import threading
 import Queue
 import time
 from os import popen
 from urllib2 import URLError
 import base64
 
+try:
+    import threading as _threading
+except ImportError:
+    import dummy_threading as _threading
+
+    
 import socket
 socket.setdefaulttimeout (60)
 
@@ -349,7 +354,7 @@ class Cache:
     # end def    
 
     def getMultiple(self, urls, nWorkers=10, on_before=None, on_after=None, on_error=None, get_list=True):
-        class getWorker(threading.Thread):
+        class getWorker(_threading.Thread):
             def __init__(self, cache_obj, pendientes, resultados, on_before=None, on_after=None, on_error=None, get_list=True):
                 self.pendientes = pendientes
                 self.resultados = resultados
@@ -358,7 +363,7 @@ class Cache:
                 self.on_after = on_after
                 self.on_error = on_error
                 self.get_list = get_list
-                threading.Thread.__init__(self)
+                _threading.Thread.__init__(self)
             # end def
 
             def run(self):

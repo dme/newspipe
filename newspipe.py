@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.39 $"
+__revision__ = "$Revision: 1.40 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1"
 __date__ = "2004-10-17"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.39 2004/11/14 22:50:04 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.40 2004/11/21 23:00:49 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -34,7 +34,6 @@ from difflib import SequenceMatcher
 import email.Utils
 import email.Header
 import Queue
-import threading
 from htmlentitydefs import  *
 import MimeWriter
 import mimetools
@@ -49,6 +48,14 @@ import logging.handlers
 from urllib2 import URLError
 from email import message_from_string
 import gc
+
+try:
+    raise ImportError ()
+    import threading as _threading
+    has_threading = True
+except ImportError:
+    import dummy_threading as _threading
+    has_threading = False
 
 has_html2text = True
 try:
@@ -592,7 +599,7 @@ def getException():
     return '\n'.join(traceback.format_exception (sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
 
 
-semaforo_html2text = threading.BoundedSemaphore()
+semaforo_html2text = _threading.BoundedSemaphore()
 
 
 def makeHeader(text):
@@ -893,7 +900,7 @@ def LeerConfig():
 # end def
 
 
-semaforo_email = threading.BoundedSemaphore()
+semaforo_email = _threading.BoundedSemaphore()
 
 def EnviarEmails(msgs, server):
     if msgs:
@@ -1110,7 +1117,7 @@ def GetHomeDir():
     return os.path.split(sys.argv[0])[0]
 # end def    
 
-class FeedWorker (threading.Thread):
+class FeedWorker (_threading.Thread):
     def __init__(self, feeds_queue, email_queue, config, email_destino, movil_destino, semaforo):
         self.config = config
         self.email_destino = email_destino
@@ -1120,7 +1127,7 @@ class FeedWorker (threading.Thread):
         self.feeds_queue = feeds_queue
         self.email_queue = email_queue
 
-        threading.Thread.__init__(self)
+        _threading.Thread.__init__(self)
     # end def
 
     def run(self):
@@ -1310,7 +1317,7 @@ def MainLoop():
     global cache
     global log
 
-    semaforo = threading.BoundedSemaphore()
+    semaforo = _threading.BoundedSemaphore()
     historico_feeds, historico_posts = None, None
 
     while True:
@@ -1347,6 +1354,10 @@ def MainLoop():
 
             if CheckOnline(config):
                 NUM_WORKERS = int(config.get('workers', '10'))
+                
+                if not has_threading:
+                    log.warning ('Running without threads support')
+                    NUM_WORKERS = 1
 
                 archivo = config['opml']
 
@@ -1371,25 +1382,30 @@ def MainLoop():
                     feeds_queue = Queue.Queue(0)
                     email_queue = Queue.Queue(0)
 
+                    log.debug ('Inserting the feeds into the pending queue')
+                    for feed in opml['body']:
+                        feeds_queue.put(feed)
+                    # end for
+
+                    log.debug ('Inserting the end-of-work markers in the queue')
+                    for x in range(NUM_WORKERS):
+                        feeds_queue.put(None)
+                    # end for
+
+                    log.debug ('Starting working threads')
                     workers = []
                     for x in range(NUM_WORKERS):
                         w = FeedWorker (feeds_queue, email_queue, config, email_destino, movil_destino, semaforo)
                         workers.append(w)
                         w.start()
                     # end for
-                    
-                    for feed in opml['body']:
-                        feeds_queue.put(feed)
-                    # end for
 
-                    for x in range(NUM_WORKERS):
-                        feeds_queue.put(None)
-                    # end for
-
+                    log.debug ('Waiting for all the threads to finish')
                     for w in workers:
                         w.join()
                     # end for                
 
+                    log.debug ('Extracting the emails from the results queue')
                     emails = []
                     while True:
                         try:
@@ -1405,7 +1421,7 @@ def MainLoop():
                     except KeyboardInterrupt:
                         raise
                     except Exception, e:
-                        mylog.exception ('Error enviando los emails: %s' % (str(e),))
+                        mylog.exception ('Unhandled exception while sending emails')
                     # end try
 
                     mylog.debug (archivo + ' finished.')
