@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-__revision__ = "$Revision: 1.3 $"
+__revision__ = "$Revision: 1.4 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://sourceforge.net/projects/newspipe/"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.3 2004/07/25 00:03:43 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.4 2004/07/25 15:47:41 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -843,6 +843,10 @@ def AgruparItems(lista, titles):
 
 
 def CargarHistoricos(name):
+    data_dir = os.path.join(GetHomeDir(), '.newspipe/data')
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
     try:
         if historico_feeds:
             del(historico_feeds)
@@ -851,12 +855,14 @@ def CargarHistoricos(name):
         pass
 
     try:
-        historico_feeds = load(open(name+'.feeds'))
+        file_name = os.path.join(data_dir, name+'.feeds')
+        historico_feeds = load(open(file_name))
         log.debug('Cargando el archivo '+name+'.feeds')
     except:
         try:
             log.debug('No existe. Cargando el archivo '+name+'.feeds.bak')
-            historico_feeds = load(open(name+'.feeds.bak'))
+            file_name = os.path.join(data_dir, name+'.feeds.bak')
+            historico_feeds = load(open(file_name))
         except:
             historico_feeds = {}
 
@@ -868,12 +874,14 @@ def CargarHistoricos(name):
         pass
 
     try:
+        file_name = os.path.join(data_dir, name+'.posts')
         log.debug('Cargando el archivo '+name+'.posts')
-        historico_posts = load(open(name+'.posts'))
+        historico_posts = load(open(file_name))
     except:
         try:
             log.debug('No existe. Cargando el archivo '+name+'.posts.bak')
-            historico_posts = load(open(name+'.posts.bak'))
+            file_name = os.path.join(data_dir, name+'.posts.bak')
+            historico_posts = load(open(file_name))
         except:
             historico_posts = {}
 
@@ -885,15 +893,17 @@ def CargarHistoricos(name):
 
 
 def GrabarHistorico(dicc, name, extension):
+    data_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/data'))
+    
     log.debug('Grabando el archivo '+name+extension)
-    dump(dicc, open(name + extension +'.new', 'w'))
+    dump(dicc, open(os.path.join(data_dir, name + extension +'.new'), 'w'))
 
-    try: os.remove (name+extension+'.bak')
+    try: os.remove (os.path.join(data_dir, name+extension+'.bak'))
     except OSError: pass
-    try: os.rename (name+extension, name+extension+'.bak')
+    try: os.rename (os.path.join(data_dir, name+extension), os.path.join(data_dir, name+extension+'.bak'))
     except OSError: pass
 
-    os.rename (name+extension+'.new', name+extension)
+    os.rename (os.path.join(data_dir, name+extension+'.new'), os.path.join(data_dir, name+extension))
     dicc['modified'] = False
 
 
@@ -912,6 +922,20 @@ def CheckOnline(config):
     else:
         return True
 
+def GetHomeDir():
+    """ Returns the home directory of the current user."""
+    
+    for name in ('appdata', 'home'):
+        result = os.environ.get(name, None)
+        if result:
+            return result
+        # end if
+    # end for
+
+    # if it can't find the home directory trough environment vars, then 
+    # return the path to this script.
+    return os.path.split(sys.argv[0])[0]
+# end def    
 
 class FeedWorker (threading.Thread):
     def __init__(self, feeds_queue, email_queue, config, email_destino, semaforo):
@@ -1075,12 +1099,15 @@ def MainLoop():
         DEBUG = config.get('debug', '0') == '1'
     
         if not log:
-            log = LogFile(config.get('log_console', '0')  == '1', 'newspipe', './log', DEBUG)        
+            log_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/log'))
+            log = LogFile(config.get('log_console', '0')  == '1', 'newspipe', log_dir, DEBUG)        
         # end if
 
         if DEBUG:
             log.warning ('DEBUG MODE')
         # end if
+
+        log.debug ('Home directory: '+GetHomeDir())
 
         try:
             log.debug ('Parametros de configuración')
@@ -1206,7 +1233,8 @@ if __name__ == '__main__':
 
     log = None
 
-    cache = Cache('./cache', agent=USER_AGENT)
+    cache_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/cache'))
+    cache = Cache(cache_dir, agent=USER_AGENT)
     try:
         MainLoop()
     except KeyboardInterrupt:
