@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-__revision__ = "$Revision: 1.4 $"
+__revision__ = "$Revision: 1.5 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://sourceforge.net/projects/newspipe/"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.4 2004/07/25 15:47:41 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.5 2004/07/25 20:38:22 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -925,7 +925,7 @@ def CheckOnline(config):
 def GetHomeDir():
     """ Returns the home directory of the current user."""
     
-    for name in ('appdata', 'home'):
+    for name in ('appdata', 'HOME'):
         result = os.environ.get(name, None)
         if result:
             return result
