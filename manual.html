@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.9 2004/07/26 15:06:55 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.10 2004/07/26 15:32:35 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
@@ -15,6 +15,7 @@ TR.odd { background-color: #d8e6ff; }
 TT, .fixed { font-family: Courier New, Courier, fixed; }
 .fixed { font-weight: bold; }
 .flat { text-align: center; background-color: #d0e0ff; border: 0px solid #8080d0; border-spacing: 0px; }
+.release { font-weight: bold; color: #990000; list-style: none;}
 
 .header { clear: both; }
 .toc {float: right; background-color: #d8e6ff; padding: 20px; margin: 10pt;}
@@ -46,7 +47,18 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li><a href="#changelog">Changelog</a></li>
 </ul>
 <br>
+
 <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=114820&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+
+<br>
+
+<p> 
+
+<a href="http://sourceforge.net/export/rss2_projfiles.php?group_id=114820"><IMG src="http://images.sourceforge.net/images/xml.png" border="0" alt="RSS Feed Available" width="36" height="14"></a> (new releases)
+<br>
+
+</p>
+
 </div
 
 <div class="main">
@@ -108,6 +120,17 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <a name="installation"></a>
 <H2>Installation</H2>
 
+<p>To install <tt>newspipe</tt>, just unzip the files you downloaded to a new folder, and edit the file newspipe.ini. The only parameters you absolutely need to edit are <tt>smtp_server</tt> and <tt>opml</tt>: </p>
+
+<ul>
+<li><tt>smtp_server</tt> should have the address of the mail server you'll use to send the emails. Here you can use the network name of the server, or the IP address. If you intend to use a local server that runs on your machine, use the address 127.0.0.1 </li>
+
+<li><tt>opml</tt> should point to your OPML file that lists the feeds you are subscribed to. If your are currently using another aggregator, it probably has an option or command to export your subscription list. If not, you can start a new file editing the <tt>test.ompl</tt> included in the .zip file you downloaded. </li>
+</ul>
+
+<p>Make sure that the <tt>ownerName</tt> and <tt>ownerEmail</tt> options at the top of the OPML file are correct. They should show your name and email address, and <tt>newspipe</tt> will use them to form the recipient of the emails.</p>
+
+<p>Once the configuration files are set, just execute the script <tt>newspipe.py</tt>. In Windows, it's usually enough to double-click on it, or you can create a shortcut to it. In Unix/Linux, run it trough Python's interpreter, with the command: <tt> python newspipe.py </tt> (assuming Python binaries are in the search PATH).
 
 <a name="configuration"></a>
 <H2>Configuration</H2>
@@ -298,6 +321,14 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 
 <a name="changelog"></a>
 <H2>Changelog</H2>
+
+<ul>
+<li class="release"> 21-July-2004 v1.0</li>
+	<ul>
+		<li>Initial release.</li>
+	</ul>
+</ul>
+
 </div>
 
 
