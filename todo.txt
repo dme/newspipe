@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.14 2004/07/31 15:42:52 reyesric Exp $
+$Id: todo.txt,v 1.15 2004/08/19 21:51:29 reyesric Exp $
 
 
 Testing
@@ -35,7 +35,6 @@ number). This seems to happen mostly on digest messages.
 Documentation
 -------------
 
-3000 Add README, INSTALL, LICENSE, etc. (the usual GPL stuff, maybe based on the.taoofmac.com's short notes)
 3001 Update newspipe.ini.sample and add newspipe.opml.sample
 3003 HTML manual (maybe generated from above)
 
