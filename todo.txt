@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.5 2004/07/24 21:13:42 reyesric Exp $
+$Id: todo.txt,v 1.6 2004/07/24 23:08:50 rcarmo Exp $
 
 
 Testing
@@ -43,3 +43,4 @@ Documentation
 Improvements (ideas for the future)
 -----------------------------------
 4000 Change the "historic" files' format from pickle to something more memory-efficient. Should try SHELVE or DBM. ZODB might be overkill.
+4001 Put cache files in a subdirectory
