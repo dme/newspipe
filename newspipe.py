@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.57 $"
+__revision__ = "$Revision: 1.58 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.7"
 __date__ = "2005-03-20"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.57 2005/04/04 03:56:40 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.58 2005/04/05 02:21:48 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -1456,7 +1456,7 @@ class FeedWorker (_threading.Thread):
                             check_text = feed['check_text'] == '1'
 
                             if check_text:
-                                if item.texto.strip() == historico_posts[item.urlHash]['text'].strip():
+                                if item.texto_nuevo.strip() == historico_posts[item.urlHash]['text'].strip():
                                     continue
                                 # end if
                             else:
