@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.48 $"
+__revision__ = "$Revision: 1.49 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.4"
 __date__ = "2004-12-26"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.48 2004/12/26 22:12:20 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.49 2005/01/29 22:42:01 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -20,7 +20,7 @@ newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
 
 import ConfigParser
 import md5
-from time import sleep
+from time import sleep, time
 import os, sys, os.path
 from cache import *
 from datetime import datetime, timedelta
@@ -86,14 +86,18 @@ CONFIG_DEFAULTS = {
     'offline': '0',
     'debug': '0',
     'workers': '10',
-    'send_inmediate': '0',
+    'send_immediate': '0',
     'multipart': 'on',
     'can_pipe': '0',
     'encoding': 'utf-8',
-    'proxy': ''
+    'proxy': '',
+    'threading': '0'
 }
 
+DEBUG = False
+
 class MyLog:
+    debug_memory = 0 # include memory information in debug
     cache = 2        # keep mem stats for "cache" seconds
 
     h = None         # file handler
@@ -104,7 +108,7 @@ class MyLog:
 
     def memory(self):
         # /proc/self/status is only available on Linux)
-        if sys.platform.lower().startswith('linux2'):
+        if self.debug_memory and sys.platform.lower().startswith('linux2'):
             if not self.lasttime:
                 self.lasttime = time.time() - self.cache - 1
             if self.lasttime + self.cache >= time.time():
@@ -542,22 +546,11 @@ def getEntity(m):
         return '&'+codepoint2name[v]+';'
     else:
         return ''
-        #return '&#'+m.groups(1)[0]+';'
-        #return unichr(v).encode('utf-8')
 
 def SanitizeText (text):
-    #text = text.replace('\n\n', '<br>')
 
     text = text.replace('\n', ' ')
     
-    """
-    text = text.replace('\xe2\x80\x99', "'")
-    text = text.replace('\xe2\x80\x9c', '"')
-    text = text.replace('\xe2\x80\x9d', '"')
-    text = text.replace('\xe2\x80\x94', '-')
-    text = text.replace('&#194;&#160;', '&nbsp;')
-    """
-
     entitys = entitydefs
     inverso = {}
     for i,j in entitys.items():
@@ -760,7 +753,7 @@ class Item:
         m.update (channel.xmlUrl)
         m.update (self.subject.encode('utf-8', 'replace'))
         self.urlHash = m.hexdigest()
-
+        
         self.subject = self.subject
 
         if 'modified_parsed' in original.keys() and original['modified_parsed'] != None:
@@ -771,11 +764,13 @@ class Item:
         # end if
 
         self.texto = self.texto_nuevo
-        # HERE
         if channel.diff and historico_posts.has_key(self.urlHash):
+            before_diff = self.texto_nuevo
             differ = TextDiff(historico_posts[self.urlHash]['text'], self.texto_nuevo)
+           
             self.texto = differ.getDiff()
-            self.timestamp = datetime.now()
+            if self.texto <> before_diff:
+                self.timestamp = datetime.now()
         # end if
 
         self.channel = channel
@@ -802,7 +797,7 @@ class Item:
         #return self.original.__repr__()
     # end def
 
-    def GetEmail(self, envio, destinatario, format="multipart", encoding='utf-8'):
+    def GetEmail(self, envio, destinatario, format="multipart", encoding='utf-8', include_threading=False):
         global historico_posts
         template = """
 <font face="Arial,Helvetica,Geneva">
@@ -863,7 +858,7 @@ class Item:
                                 ext = ext[:ext.find('?')]
                             # end if
                             name = '%s%s' % (md5texto(filename+str(i)),ext)
-                            html_version = html_version.replace('%s' % (url,), 'cid:%s' % (name,))
+                            html_version = html_version.replace(url, 'cid:'+name)
                             images += [{'name':name, 'url':url, 'filename':filename},]
                             i += 1
                         # end if
@@ -873,6 +868,7 @@ class Item:
             # end if
         # end if
 
+        envio = self.creatorEmail
         if envio == None:
             envio = destinatario[1]
         # end if
@@ -885,18 +881,25 @@ class Item:
         headers += [('Message-ID', msgid),]
         headers += [('Date', self.timestamp.strftime("%a, %d %b %Y %H:%M:%S +0000")),]
 
-        headers += [('X-Item-Attributes', ', '.join(self.original.keys())),]
-        headers += [('X-Item-Text-Key', self.text_key),]
         headers += [('X-NewsPipe-Version', '%s (Rev %s, Python %s, %s) %s' % (__version__, __revision_number__, PYTHON_VERSION, sys.platform, __url__)),]
         headers += [('X-Channel-Feed', self.channel.xmlUrl),]
-        headers += [('X-Channel-x-cache-result', self.channel.original['Cache-Result']),]
         headers += [('X-Channel-title', makeHeader(self.channel.title)),]
         headers += [('X-Channel-description', makeHeader(self.channel.description)),]
-        headers += [('X-Item-Modified', self.is_modified),]
-        headers += [('X-Item-Hash-Link', md5texto(self.link.encode('latin1', 'replace'))),]
-        headers += [('X-Item-Hash-Feed', md5texto(self.channel.xmlUrl.encode('latin1', 'replace'))),]
-        headers += [('X-Item-Hash-Subject', md5texto(self.subject.encode('latin1', 'replace'))),]
-        headers += [('X-Item-Hash', self.urlHash),]
+        headers += [('List-Id', '%s <%s>' % ( makeHeader(self.channel.title), self.channel.xmlUrl)),]
+        headers += [('Content-Location', self.link),]
+
+        if DEBUG:
+            headers += [('X-Channel-x-cache-result', self.channel.original['Cache-Result']),]
+            headers += [('X-Item-Attributes', ', '.join(self.original.keys())),]
+            headers += [('X-Item-Text-Key', self.text_key),]
+            headers += [('X-Item-Modified', self.is_modified),]
+            headers += [('X-Item-Hash-Link', md5texto(self.link.encode('latin1', 'replace'))),]
+            headers += [('X-Item-Hash-Feed', md5texto(self.channel.xmlUrl.encode('latin1', 'replace'))),]
+            headers += [('X-Item-Hash-Subject', md5texto(self.subject.encode('latin1', 'replace'))),]
+            headers += [('X-Item-Hash', self.urlHash),]
+            if images:
+                for each in images:
+                    headers.append (('X-Image-'+each['name'], each['url']))
        
         lastid = historico_feeds[self.channel.xmlUrl].get("lastid", "")
         if lastid == "":
@@ -907,9 +910,10 @@ class Item:
         else:
             refid = lastid.split()[-1]
         # endif
-        
-        headers += [('In-Reply-To', refid),]
-        headers += [('References', lastid),]
+       
+        if include_threading:      
+            headers += [('In-Reply-To', refid),]
+            headers += [('References', lastid),]
  
         if historico_feeds[self.channel.xmlUrl].has_key("lastid"):
             historico_feeds[self.channel.xmlUrl]["lastid"] = " ".join( (historico_feeds[self.channel.xmlUrl]["lastid"] + " " + msgid).split()[-4:] )
@@ -946,11 +950,12 @@ def LeerConfig():
     parser.add_option("-f", "--offline", action="store_const", const="1", dest="offline", help="the program won't try to fetch any data from the internet, using cached versions instead")
     parser.add_option("-x", "--debug", action="store_const", const="1", dest="debug", help="log a lot of debug information")
     parser.add_option("-w", "--workers", dest="workers", help="Number of threads to use simultaneusly")
-    parser.add_option("-n", "--send_inmediate", action="store_const", const="1", dest="send_inmediate", help="send messages as soon as possible, instead of waiting to the end")
+    parser.add_option("-n", "--send_immediate", action="store_const", const="1", dest="send_immediate", help="send messages as soon as possible, instead of waiting to the end")
     parser.add_option("-m", "--multipart", action="store_const", const="on", dest="multipart", help=" include a plaintext version of item contents as well as an HTML version.")
     parser.add_option("-p", "--can_pipe", action="store_const", const="1", dest="can_pipe", help="Allow the pipe:// protocol in urls")
     parser.add_option("-u", "--encoding", dest="encoding", help="unicode encoding to use when composing the emails")
     parser.add_option("-r", "--proxy", dest="proxy", help="addess and port of the proxy server to use")
+    parser.add_option("-a", "--threading", action="store_const", const="1", dest="threading", help="include threading headers in the emails")
     
     (options, args) = parser.parse_args()
     
@@ -1242,7 +1247,6 @@ class FeedWorker (_threading.Thread):
             # end if
 
             url = feed['xmlUrl']
-            
             try:
                 items = []
 
@@ -1323,6 +1327,7 @@ class FeedWorker (_threading.Thread):
                             item.is_modified = 'False'
                         # end if
 
+                        dump(item, open ('c:/desarrollo/newspipe/textos/'+item.urlHash+'.'+str(time.time()), 'w'))
                         items.append(item)
                     # end for
                 # end if xml:
@@ -1350,10 +1355,11 @@ class FeedWorker (_threading.Thread):
                     format = "plaintext"
                     
                 encoding = config['encoding']
+                include_threading = config['threading'] == '1'
                     
-                if config['send_inmediate'] == '1':
+                if config['send_immediate'] == '1':
                     try:
-                        emails = [item.GetEmail(envio, email_destino, format, encoding) for item in items]
+                        emails = [item.GetEmail(envio, email_destino, format, encoding, include_threading) for item in items]
                         EnviarEmails (emails, config['smtp_server'])
                     except Exception, e:
                         email_ok = False
@@ -1361,15 +1367,15 @@ class FeedWorker (_threading.Thread):
                     # end try
                 else:
                     for item in items:
-                        self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding))
+                        self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding, include_threading))
                     # end for
                 # end if
 
                 # second pass for mobile copy, provided we could send the first one
                 if( (feed['mobile'] == '1' ) and movil_destino and email_ok ):
-                   if config['send_inmediate'] == '1':
+                   if config['send_immediate'] == '1':
                       try:
-                          emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding) for item in items]
+                          emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading) for item in items]
                           EnviarEmails (emails, config['smtp_server'])
                       except Exception, e:
                           email_ok = False
@@ -1377,7 +1383,7 @@ class FeedWorker (_threading.Thread):
                       # end try
                    else:
                       for item in items:
-                          self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding))
+                          self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading))
                       # end for
                   # end if
 
@@ -1412,6 +1418,7 @@ def MainLoop():
     global historico_feeds
     global cache
     global log
+    global DEBUG
 
     semaforo = _threading.BoundedSemaphore()
     historico_feeds, historico_posts = None, None
