@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.13 2004/07/30 23:41:44 rcarmo Exp $
+$Id: todo.txt,v 1.14 2004/07/31 15:42:52 reyesric Exp $
 
 
 Testing
@@ -22,6 +22,7 @@ Features
 1000 Optionally send a text-only copy of some feeds to a second e-mail address
 1001 Create a "mobile" INI entry for 1000
 1005 Create a INI entry to set the delay between checks (default 60 minutes) (name of the parameter undetermined yet)
+1006 Tray Icon for windows
 
 Bugs
 ----
@@ -42,3 +43,5 @@ Improvements (ideas for the future)
 -----------------------------------
 4000 Change the "historic" files' format from pickle to something more memory-efficient. Should try SHELVE or DBM. ZODB might be overkill.
 next (4002)
+4001 Refactor the configuration handling, to avoid having to include the defaults everywhere (to use config['param'] instead of config.get('param', <default>') )
+
