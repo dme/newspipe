@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.23 $"
+__revision__ = "$Revision: 1.24 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
 __date__ = "2004-09-05"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.23 2004/09/14 02:02:04 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.24 2004/09/27 00:09:06 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -55,7 +55,8 @@ try:
 except ImportError:
     has_html2text = False
 
-USER_AGENT = 'NewsPipe/'+__version__+' rev.'+__revision_number__+' '+__url__
+PYTHON_VERSION = '.'.join([str(x) for x in sys.version_info])
+USER_AGENT = 'NewsPipe/'+__version__+' rev.'+__revision_number__+' Python: '+ PYTHON_VERSION+' Platform: '+sys.platform +' / '+__url__
 
 def LogFile(stderr=True, name='default', location='.', debug=False):
     if not os.path.exists(location):
