@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.5 2004/07/25 12:28:02 rcarmo Exp $">
+<meta name="version" value="$Id: manual.html,v 1.6 2004/07/25 15:49:26 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
@@ -26,23 +26,26 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <p><tt>newspipe</tt> is an <a href="#rss">RSS</a>/<a href="#atom">Atom</A> aggregator with a difference: It allows you to keep track of your feeds through e-mail.</p>
 <p>You can read, organize and archive news feeds with your current mail client, without the need for a separate program. <tt>newspipe</tt> collects all your news and sends it to you as plaintext or <tt>HTML</tt> mail, both as single items or grouped in a digest.</p>
 
-<p><tt>newspipe</tt> is the creation of <a href="#ricardo">Ricardo M. Reyes</a>, and started out as an <a href="#rss">RSS</a>-to-<tt>POP3</tt> converter called <tt>rss2mail</tt>. Over time, it grew to the extent where real-time collection via <tt>POP3</tt> wasn't flexible enough, and it was retooled to work via <tt>SMTP</tt>.
+<p><tt>newspipe</tt> is the creation of <a href="#ricardo">Ricardo M. Reyes</a>, and started out as an <a href="#rss">RSS</a>-to-<tt>POP3</tt> converter called <tt>rss2pop3</tt>. Over time, it grew to the extent where real-time collection via <tt>POP3</tt> wasn't flexible enough, and it was retooled to work via <tt>SMTP</tt>.
 
 <H2>Features</H2>
 
 <ul>
-<li>uses Mark Pilgrim's Universal Feed Parser to support <a href="#rss">RSS</a> and <a href="#atom">Atom</a> feeds</li>
+<li>uses <a href="http://www.diveintomark.org/">Mark Pilgrim's</a> <a href="http://www.feedparser.org/">Universal Feed Parser</a> to support <a href="#rss">RSS</a> and <a href="#atom">Atom</a> feeds</li>
 <li>feeds are listed in an <a href="#opml">OPML</a> file</li>
 <ul>
 <li>feed options can be set individually for each feed or for a group of feeds</li>
-<li>supports screen-scraping scripts via an internal <tt>file://</tt> URI schema</li>
+<li>supports screen-scraping scripts via an internal <tt>pipe://</tt> URI schema</li>
+<li>the <a href="#opml">OPML</a> file can reside locally (in your hard disk) or remotelly (in a web server).</li>
 </ul>
 <li>sends news items via <tt>SMTP</tt> to a designated e-mail address</li>
 <ul>
 <li>messages can be in <tt>HTML</tt>/multipart <tt>MIME</tt> format or plaintext</li>
 <li>multiple items from a feed can be grouped and sent in a digest message</li>
 <li>updated news items are detected and re-sent with <font color="#337700"><b>additions</b></font> and <font color="#FF0000"><STRIKE>deletions</STRIKE></font> highlighted</li>
+<li>images linked from the feed items are downloaded and included as INLINE images in the emails.
 </ul>
+<li>full support of HTTP optimizations, like GZip compression, "If-Modified-Since" and "If-None-Match" headers. Feeds and image files will only be downloaded when they have changed.</li>
 </ul>
 
 <H2>Requirements</H2>
@@ -54,12 +57,20 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li>a mail client (preferably one capable of displaying <tt>HTML</tt> mail)</li>
 </ul>
 
+<p>All the required libraries are included in the distributions .zip file.</p>
+
 <p><tt>newspipe</tt> has so far been successfully tested on:</p>
 <ul>
 <li>Windows (plain and <a href="http://www.cygwin.com">Cygwin</a>)</li>
 <li>Linux</li>
 <li>Mac OS X (10.3.x)</li>
 </ul>
+
+<H2>Download</H2>
+
+<p>You can download the latest stable version from <a href="http://sourceforge.net/project/showfiles.php?group_id=114820&package_id=124374">here</a>.</p>
+
+<p>If you would like to try the latest version and you have a CVS client, you are welcome to download it from the CVS repository (module newspipe at cvs.sourceforge.net:/cvsroot/newspipe). You can also browse the latest source code <a href="http://cvs.sourceforge.net/viewcvs.py/newspipe/newspipe/">here</a>.</p>
 
 <H2>Installation</H2>
 
@@ -229,9 +240,14 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Acknowledgements</H2>
 <p>
 <ul>
-<li><tt>feedparser.py</tt> by Mark Pilgrim</li>
-<li><tt>html2text.py</tt> by Aaron Swartz (me@aaronsw.com)</li>
+<li><a href="http://the.taoofmac.com/space/">Rui Carmo</a>, for writing this documentation, for it's Linux and MacOS testing and a lot of suggestions and bug reports.</li>
+<li><a href="http://www.diveintomark.org/">Mark Pilgrim</a>, author of <tt>feedparser.py</tt> (<a href="http://www.feedparser.org/">download feedparser.py</a>)</li> 
+<li><a href="http://www.aaronsw.com/">Aaron Swartz</a>, author of <tt>html2text.py</tt> (<a href="http://www.aaronsw.com/2002/html2text">download html2text.py</a>)</li>
 </ul>
+
+<H2>Contact the Author</H2>
+<p>You can contact the author of <tt>newspipe</tt> trough email at <a href="mailto:reyesric@ufasta.edu.ar">reyesric@ufasta.edu.ar</a></p>
+<p>Any suggestion, bug reports, or comments are most welcome.</p>
 
 <H2>References</H2>
 
