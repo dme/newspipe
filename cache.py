@@ -2,11 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.4 $"
+__revision__ = "$Revision: 1.5 $"
 __revision_number__ = __revision__.split()[1]
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__id__ = "$Id: cache.py,v 1.4 2004/09/02 02:21:56 reyesric Exp $"
+__id__ = "$Id: cache.py,v 1.5 2004/09/02 03:26:12 reyesric Exp $"
 
 from glob import glob
 from pickle import load, dump
@@ -290,7 +290,7 @@ class Cache:
                 last_mod = st[8]
                 info['Date'] = time.ctime(last_mod)
             # end if
-        except IOError:
+        except:
             info = None
         # end try
         
