@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.26 $"
+__revision__ = "$Revision: 1.27 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
 __date__ = "2004-10-08"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://rage.against.org/>"]
-__id__ = "$Id: newspipe.py,v 1.26 2004/10/09 01:57:31 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.27 2004/10/10 02:14:15 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -113,6 +113,9 @@ class MyLog:
     def exception(self, msg, *args, **kwargs):
         msg = self.memory() + msg
         log.exception(msg, *args, **kwargs)
+    def error(self, msg, *args, **kwargs):
+        msg = self.memory() + msg
+        log.error(msg, *args, **kwargs)
 
 
 def LogFile(stderr=True, name='default', location='.', debug=False):
@@ -1137,7 +1140,7 @@ class FeedWorker (threading.Thread):
             # end if
 
             url = feed['xmlUrl']
-
+            
             try:
                 items = []
 
@@ -1164,9 +1167,22 @@ class FeedWorker (threading.Thread):
 
                 title = feed.get('title', feed.get('text', url))
                 mylog.debug ('Processing '+title)
+
+                auth = feed.get('auth', None)
+                if auth:
+                    if ':' in auth:
+                        username, password = auth.split(':')
+                    else:
+                        mylog.error ('The "auth" parameter for the feed '+title+' is invalid')
+                        continue
+                    # end if
+                else:
+                    username, password = None, None
+                # end if
+                
                 xml = None
                 try:
-                    xml = cache.feed_parse(url, can_pipe=config.get('can_pipe', '0') == '1')
+                    xml = cache.feed_parse(url, config.get('can_pipe', '0') == '1', username, password)
                 except socket.timeout:
                     mylog.info ('Timeout error downloading %s' % url)
                     mylog.debug ('Will retry in the the next pass')

@@ -2,11 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.5 $"
+__revision__ = "$Revision: 1.6 $"
 __revision_number__ = __revision__.split()[1]
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__id__ = "$Id: cache.py,v 1.5 2004/09/02 03:26:12 reyesric Exp $"
+__id__ = "$Id: cache.py,v 1.6 2004/10/10 02:14:15 reyesric Exp $"
 
 from glob import glob
 from pickle import load, dump
@@ -26,6 +26,7 @@ import Queue
 import time
 from os import popen
 from urllib2 import URLError
+import base64
 
 import socket
 socket.setdefaulttimeout (60)
@@ -105,7 +106,7 @@ class Cache:
         return m.hexdigest()
     # end def    
         
-    def urlopen(self, url, max_age=None, referer=None, can_pipe=False):
+    def urlopen(self, url, max_age=None, referer=None, can_pipe=False, username=None, password=None):
         if can_pipe:
             if url.lower().startswith('pipe://'):
                 path = url[7:]
@@ -191,6 +192,11 @@ class Cache:
             request = Request(url)
             request.add_header('User-Agent', self.agent)
             request.add_header("Accept-encoding", "gzip")
+            if username:
+                userpass = (username, password)
+                authstring = base64.encodestring('%s:%s' % userpass)[:-1]
+                request.add_header("Authorization", "Basic %s" % authstring)
+            # end if
             if referer:
                 request.add_header('Referer', referer)
             # end if
@@ -297,12 +303,12 @@ class Cache:
         return info
     # end def    
 
-    def feed_parse(self, url, can_pipe=False):
+    def feed_parse(self, url, can_pipe=False, username=None, password=None):
         if not _has_feedparser:
             import feedparser
         # end if
 
-        resource = self.urlopen(url, can_pipe=can_pipe)
+        resource = self.urlopen(url, can_pipe=can_pipe, username=username, password=password)
         if resource:
             result = parse (resource.content)
             result['channel']['Cache-Result'] = resource.info['Cache-Result']
@@ -335,7 +341,7 @@ class Cache:
                             except OSError:
                                 pass
                             # end try
-                        # end for
+                            # end for
                     # end if
                 # end if
             # end if
@@ -421,4 +427,4 @@ class Cache:
 
 if __name__ == '__main__':
     c = Cache(r'C:\Documents and Settings\Administrador\Datos de programa\.newspipe\cache', debug=True, offline=False)
-    c.purge(10)
+    
