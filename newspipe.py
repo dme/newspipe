@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.8 $"
+__revision__ = "$Revision: 1.9 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.8 2004/07/30 23:41:44 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.9 2004/07/31 01:36:10 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -649,7 +649,7 @@ class Item:
         #return self.original.__repr__()
     # end def
 
-    def GetEmail(self, destinatario, plaintext=False):
+    def GetEmail(self, envio, destinatario, plaintext=False):
         template = """
 <FONT FACE="Arial,Helvetica,Geneva">
     <p>
@@ -699,7 +699,6 @@ class Item:
         # end if
 
         headers = []
-        envio = config.get( 'sender', destinatario[1] )
         headers += [('From', '"%s" <%s>' % (makeHeader(self.channel.title), envio)),]
         headers += [('To', '"%s" <%s>' % (destinatario[0], destinatario[1],)),]
         headers += [('Subject', makeHeader(self.subject)),]
@@ -738,17 +737,28 @@ def LeerConfig():
 
 semaforo_email = threading.BoundedSemaphore()
 
-def EnviarEmails(msgs, server, toaddr):
+def EnviarEmails(msgs, server):
     if msgs:
         semaforo_email.acquire()
         try:
             smtp = smtplib.SMTP(server)
             smtp.set_debuglevel(0)
-
-            fromaddr = toaddr
+            frompattern = re.compile(r'^From: .* <(.+)>$', re.MULTILINE ) 
+            topattern = re.compile(r'^To: .* <(.+)>$', re.MULTILINE ) 
 
             for msg in msgs:
+                # get initial "From:" and "To:" headers from message body to use in envelope
+                # this is probably a bit CPU intensive for very large messages, but is the
+                # only way to have a generic queue for any sender/destination pair without
+                # inserting objects in the queue (instead of just the message sources)
+                tuple = frompattern.search(msg).groups()
+                fromaddr = tuple[0] # get only first match
+                tuple = topattern.search(msg).groups()
+                toaddr = tuple[0]
+
+                # build envelope and send message
                 smtp.sendmail(fromaddr, toaddr, msg)
+                log.info('mail sent to %s from %s ' % (toaddr, fromaddr))
             # end for
             smtp.quit()
             log.info ('%d emails sent succesfully' % (len(msgs),))
@@ -935,9 +945,10 @@ def GetHomeDir():
 # end def    
 
 class FeedWorker (threading.Thread):
-    def __init__(self, feeds_queue, email_queue, config, email_destino, semaforo):
+    def __init__(self, feeds_queue, email_queue, config, email_destino, movil_destino, semaforo):
         self.config = config
         self.email_destino = email_destino
+        self.movil_destino = movil_destino
         self.semaforo = semaforo
 
         self.feeds_queue = feeds_queue
@@ -949,6 +960,7 @@ class FeedWorker (threading.Thread):
     def run(self):
         config = self.config
         email_destino = self.email_destino
+        movil_destino = self.movil_destino
         semaforo = self.semaforo
 
         while True:
@@ -1040,20 +1052,38 @@ class FeedWorker (threading.Thread):
                 # end if
 
                 email_ok = True
+                envio = config.get( 'sender', email_destino[1] )
                 plaintext = (config.get('textonly', '0') == '1') or (feed.get('textonly', '0') == '1')
-                if config.get('send_inmediate', '0') == '1':
+                if config.get('send_immediate', '0') == '1':
                     try:
-                        emails = [item.GetEmail(email_destino, plaintext) for item in items]
-                        EnviarEmails (emails, config['smtp_server'], email_destino[1])
+                        emails = [item.GetEmail(envio, email_destino, plaintext) for item in items]
+                        EnviarEmails (emails, config['smtp_server'])
                     except Exception, e:
                         email_ok = False
                         log.exception ('Error enviando los emails: %s' % (str(e),))
                     # end try
                 else:
                     for item in items:
-                        self.email_queue.put(item.GetEmail(email_destino, plaintext))
+                        self.email_queue.put(item.GetEmail(envio, email_destino, plaintext))
                     # end for
                 # end if
+
+                # second pass for mobile copy, provided we could send the first one
+                if( (feed.get('mobile','0') == '1' ) and movil_destino and email_ok ):
+                   plaintext = 1
+                   if config.get('send_immediate', '0') == '1':
+                      try:
+                          emails = [item.GetEmail(envio, movil_destino, plaintext) for item in items]
+                          EnviarEmails (emails, config['smtp_server'])
+                      except Exception, e:
+                          email_ok = False
+                          log.exception ('Error enviando los emails: %s' % (str(e),))
+                      # end try
+                   else:
+                      for item in items:
+                          self.email_queue.put(item.GetEmail(envio, movil_destino, plaintext))
+                      # end for
+                  # end if
 
                 if email_ok:
                     for item in items_sin_agrupar:
@@ -1136,6 +1166,10 @@ def MainLoop():
 
                 if opml:
                     email_destino = (opml['head']['ownerName'].strip('"'), opml['head']['ownerEmail'])
+                    if( opml['head']['ownerMobile'] ):
+                      movil_destino = (opml['head']['ownerName'].strip('"'), opml['head']['ownerMobile'])
+                    else:
+                      movil_destino = false
 
                     if not historico_feeds or not historico_posts:
                         historico_feeds, historico_posts = CargarHistoricos(opml['head']['title'])
@@ -1145,7 +1179,7 @@ def MainLoop():
 
                     workers = []
                     for x in range(NUM_WORKERS):
-                        w = FeedWorker (feeds_queue, email_queue, config, email_destino, semaforo)
+                        w = FeedWorker (feeds_queue, email_queue, config, email_destino, movil_destino, semaforo)
                         workers.append(w)
                         w.start()
                     # end for
@@ -1173,7 +1207,8 @@ def MainLoop():
                     # end while
 
                     try:
-                        EnviarEmails (emails, config['smtp_server'], email_destino[1])
+                        envio = config.get('sender', email_destino[1])
+                        EnviarEmails (emails, config['smtp_server'])
                         if historico_feeds['modified']:
                             GrabarHistorico (historico_feeds, opml['head']['title'], '.feeds')
                         if historico_posts['modified']:
