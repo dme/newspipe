@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.9 $"
+__revision__ = "$Revision: 1.10 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.9 2004/07/31 01:36:10 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.10 2004/07/31 03:01:18 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -743,18 +743,16 @@ def EnviarEmails(msgs, server):
         try:
             smtp = smtplib.SMTP(server)
             smtp.set_debuglevel(0)
-            frompattern = re.compile(r'^From: .* <(.+)>$', re.MULTILINE ) 
-            topattern = re.compile(r'^To: .* <(.+)>$', re.MULTILINE ) 
+            frompattern = re.compile(r'^From: .* <(.+)>', re.MULTILINE ) 
+            topattern = re.compile(r'^To: .* <(.+)>', re.MULTILINE ) 
 
             for msg in msgs:
                 # get initial "From:" and "To:" headers from message body to use in envelope
-                # this is probably a bit CPU intensive for very large messages, but is the
                 # only way to have a generic queue for any sender/destination pair without
                 # inserting objects in the queue (instead of just the message sources)
-                tuple = frompattern.search(msg).groups()
-                fromaddr = tuple[0] # get only first match
-                tuple = topattern.search(msg).groups()
-                toaddr = tuple[0]
+                head = msg[0:512]
+                fromaddr = frompattern.search(head).group()
+                toaddr = topattern.search(head).group()
 
                 # build envelope and send message
                 smtp.sendmail(fromaddr, toaddr, msg)
@@ -1207,7 +1205,6 @@ def MainLoop():
                     # end while
 
                     try:
-                        envio = config.get('sender', email_destino[1])
                         EnviarEmails (emails, config['smtp_server'])
                         if historico_feeds['modified']:
                             GrabarHistorico (historico_feeds, opml['head']['title'], '.feeds')
