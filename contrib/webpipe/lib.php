@@ -1,6 +1,6 @@
 <script language="php">
 // ======================================================================
-// $Id: lib.php,v 1.5 2004/11/07 13:57:58 rcarmo Exp $
+// $Id: lib.php,v 1.6 2004/11/07 14:00:31 rcarmo Exp $
 //
 // WebPipe main library file
 //
@@ -134,7 +134,7 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
     $aValues["from"] = trim(preg_replace( '/("|:|<.+>)/', "", imap_utf8($oMessage->from) ));
     $aValues["date"] = $oMessage->date;
     $aValues["size"] = $oMessage->size;
-    $aValues["shortdate"] = strftime("%a %m %H:%M", strtotime($oMessage->date));
+    $aValues["shortdate"] = strftime("%a %d %H:%M", strtotime($oMessage->date));
     return $aValues;
   } // getValues }}}
 
