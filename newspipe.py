@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.42 $"
+__revision__ = "$Revision: 1.43 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.1"
 __date__ = "2004-12-05"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.42 2004/12/06 00:47:24 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.43 2004/12/08 20:25:32 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -64,6 +64,30 @@ except ImportError:
 
 PYTHON_VERSION = '.'.join([str(x) for x in sys.version_info])
 USER_AGENT = 'NewsPipe/'+__version__+' rev.'+__revision_number__+' Python: '+ PYTHON_VERSION+' Platform: '+sys.platform +' / '+__url__
+
+OPML_DEFAULTS = {
+    'digest': '0',
+    'titles': '1',
+    'download_link': '0',
+    'diff': '1',
+    'check_text': '1',
+    'delay': '60',
+    'textonly': '0',
+    'mobile': '0'
+}
+
+CONFIG_DEFAULTS = {
+    'textonly': '0',
+    'log_console': '0',
+    'sleep_time': '5',
+    'offline': '0',
+    'debug': '0',
+    'workers': '10',
+    'send_inmediate': '0',
+    'multipart': 'on',
+    'can_pipe': '0',
+    'encoding': 'utf-8'
+}
 
 class MyLog:
     cache = 2        # keep mem stats for "cache" seconds
@@ -895,6 +919,11 @@ def LeerConfig():
     for attr in ini.options('NewsPipe'):
         result[attr.lower()] = ini.get('NewsPipe', attr)
     # end for
+    
+    for key, value in CONFIG_DEFAULTS.items():
+        if not key in result.keys():
+            result[key] = value
+            
     return result
 # end def
 
@@ -1187,7 +1216,7 @@ class FeedWorker (_threading.Thread):
                 
                 xml = None
                 try:
-                    xml = cache.feed_parse(url, config.get('can_pipe', '0') == '1', username, password)
+                    xml = cache.feed_parse(url, config['can_pipe'] == '1', username, password)
                 except socket.timeout:
                     mylog.info ('Timeout error downloading %s' % url)
                     mylog.debug ('Will retry in the the next pass')
@@ -1203,7 +1232,7 @@ class FeedWorker (_threading.Thread):
 
                 if xml:
                     mylog.debug (xml['channel']['Cache-Result'] + ' ' + url)
-                    channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed.get('download_link', '0') == '1', feed.get('diff', '1') == '1')
+                    channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed['download_link'] == '1', feed['diff'] == '1')
                     for elemento in xml['items']:
                         item = channel.NewItem(elemento, xml["encoding"])
 
@@ -1211,7 +1240,7 @@ class FeedWorker (_threading.Thread):
                             historico_posts[item.urlHash]['timestamp'] = datetime.now()
                             historico_posts['modified'] = True
 
-                            check_text = feed.get('check_text', '1') == '1'
+                            check_text = feed['check_text'] == '1'
 
                             if check_text:
                                 if item.texto_nuevo.strip() == historico_posts[item.urlHash]['text'].strip():
@@ -1238,23 +1267,23 @@ class FeedWorker (_threading.Thread):
 
                 items_sin_agrupar = items[:]
 
-                if (len(items) >= 1) and (feed.get('digest', '0') == '1'):
+                if (len(items) >= 1) and (feed['digest'] == '1'):
                     lista_vieja = items[:]
-                    items = [AgruparItems(lista_vieja, feed.get('titles', '1') == '1', config.get('encoding', 'utf-8')),]
+                    items = [AgruparItems(lista_vieja, feed['titles'] == '1', config['encoding']),]
                 # end if
 
                 email_ok = True
                 envio = config.get( 'sender', email_destino[1] )
-                if(config.get('multipart', 'on') == 'off'):
+                if(config['multipart'] == 'off'):
                      format = "html"
                 else:
                      format = "multipart"
-                if((config.get('textonly', '0') == '1') or (feed.get('textonly', '0') == '1')):
+                if((config['textonly'] == '1') or (feed['textonly'] == '1')):
                     format = "plaintext"
                     
-                encoding = config.get('encoding', 'utf-8')
+                encoding = config['encoding']
                     
-                if config.get('send_immediate', '0') == '1':
+                if config['send_inmediate'] == '1':
                     try:
                         emails = [item.GetEmail(envio, email_destino, format, encoding) for item in items]
                         EnviarEmails (emails, config['smtp_server'])
@@ -1269,8 +1298,8 @@ class FeedWorker (_threading.Thread):
                 # end if
 
                 # second pass for mobile copy, provided we could send the first one
-                if( (feed.get('mobile','0') == '1' ) and movil_destino and email_ok ):
-                   if config.get('send_immediate', '0') == '1':
+                if( (feed['mobile'] == '1' ) and movil_destino and email_ok ):
+                   if config['send_inmediate'] == '1':
                       try:
                           emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding) for item in items]
                           EnviarEmails (emails, config['smtp_server'])
@@ -1291,7 +1320,7 @@ class FeedWorker (_threading.Thread):
                     # end for
 
                     # get the time until next check, 60 minutos by default
-                    delay = int(feed.get('delay', '60'))
+                    delay = int(feed['delay'])
 
                     ###semaforo.acquire()
                     historico_feeds[url]['ultimo_check'] = datetime.now()
@@ -1322,11 +1351,11 @@ def MainLoop():
     while True:
         config = LeerConfig()
 
-        DEBUG = config.get('debug', '0') == '1'
+        DEBUG = config['debug'] == '1'
     
         if not log:
             log_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/log'))
-            log = LogFile(config.get('log_console', '0')  == '1', 'newspipe', log_dir, DEBUG)        
+            log = LogFile(config['log_console']  == '1', 'newspipe', log_dir, DEBUG)        
         # end if
         gc.collect()
 
@@ -1344,7 +1373,7 @@ def MainLoop():
             # end for
             mylog.debug ('-'*30)
 
-            cache.offline = config.get('offline', '0') == '1'
+            cache.offline = config['offline'] == '1'
             if cache.offline:
                 mylog.warning('Working offline')
             # end if
@@ -1352,7 +1381,7 @@ def MainLoop():
             cache.debug = DEBUG
 
             if CheckOnline(config):
-                NUM_WORKERS = int(config.get('workers', '10'))
+                NUM_WORKERS = int(config['workers'])
                 
                 if not has_threading:
                     log.warning ('Running without threads support')
@@ -1362,7 +1391,7 @@ def MainLoop():
 
                 opml = None
                 try:
-                    opml = AplanarArbol(ParseOPML(cache.urlopen(archivo, max_age=60, can_pipe=False).content))
+                    opml = AplanarArbol(ParseOPML(cache.urlopen(archivo, max_age=60, can_pipe=False).content), OPML_DEFAULTS)
                     mylog.debug ('Processing file: '+archivo)
                 except:
                     mylog.exception ('Error parsing file: '+archivo)
@@ -1450,7 +1479,7 @@ def MainLoop():
                 mylog.exception ('Unhandled exception when purging the cache')
             # end try
 
-            if int(config.get('sleep_time', '0')) == 0:
+            if int(config['sleep_time']) == 0:
                 break
             else:
                 del(historico_feeds)

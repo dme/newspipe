@@ -2,11 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.2 $"
+__revision__ = "$Revision: 1.3 $"
 __revision_number__ = __revision__.split()[1]
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__id__ = "$Id: opml.py,v 1.2 2004/07/26 16:55:11 reyesric Exp $"
+__id__ = "$Id: opml.py,v 1.3 2004/12/08 20:25:33 reyesric Exp $"
 
 from pprint import pprint
 
@@ -111,17 +111,31 @@ def ListToDict(lista):
     return result
 # end def    
 
-def AplanarArbol(arbol):
+def AplanarArbol(arbol, defaults=None):
     lista = []
 
     ProcesarRama(arbol['opml']['body'], lista, [], {})
 
     result = {'head':ListToDict(arbol['opml']['head'].items()),
               'body':lista}
+            
+    # add an index value to each item            
+    for i, each in enumerate(lista):
+        each[u'index'] = unicode(str(i))
+                  
+    # add the default values to those item that are not complete
+    if defaults:
+        for each in lista:
+            for key,value in defaults.items():
+                if not isinstance(key, unicode):
+                    key = unicode(key)
+                if not isinstance(value, unicode):
+                    value = unicode(value)
+                if not key in each.keys():
+                    each[key] = value
 
     return result
 # end def    
 
 if __name__ == '__main__':
-    pprint (AplanarArbol(ParseOPML('ricardo.opml')))
-    #pprint (ParseOPML('prueba.opml'))
+    pprint (AplanarArbol(ParseOPML('prueba.opml'), {'key1':'val1', 'key2':'val2'}))
