@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.21 2004/12/06 00:26:32 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.22 2004/12/22 03:13:23 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -50,7 +50,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=114820&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
 <br>
 <p> 
-<a href="http://sourceforge.net/export/rss2_projfiles.php?group_id=114820"><IMG src="http://images.sourceforge.net/images/xml.png" border="0" alt="RSS Feed Available" width="36" height="14"></a> (new releases)
+<a href="http://sourceforge.net/export/rss2_projnews.php?group_id=114820&rss_fulltext=1"><IMG src="http://images.sourceforge.net/images/xml.png" border="0" alt="RSS Feed Available" width="36" height="14"></a> (new releases)
 </p>
 <p><a href="http://sourceforge.net/projects/newspipe">Newspipe's Home<br>at Sourceforge.net</a></p>
 </div>
@@ -329,6 +329,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td><i>None</i></td>
     <td>Contains an optional <tt>username:password</tt> string for basic HTTP authentication (known to work with <a href="http://www.gmail.com">Gmail</a> <a href="#Atom">Atom</a> feeds.)</td>
   </tr>
+  <tr class="odd">
+    <td class="fixed">download_images</td>
+    <td>1</td>
+    <td>If set to "0", Newspipe won't download any images, and the emails will link to them externally.</td>
+  </tr>
 </table>
 
 <a name="mailheaders"></a>
@@ -414,6 +419,17 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
+    <li class="release"> v1.1.3 &nbsp; 21-December-2004
+        <ul class="release_text">
+            <li> Fixed a bug resolving relative urls, introduced in v1.1.2</li>
+        </ul>
+    </li>
+    <li class="release"> v1.1.2 &nbsp; 13-December-2004
+        <ul class="release_text">
+            <li> Fixed the stupid error when Newspipe.py wasn't run from the same folder it's installed in</li>
+            <li> New OPML parameter: download_images. It defaults to "1". If set to "0", Newspipe won't download any images, and the emails will link to them externally </li>
+        </ul>
+    </li>
     <li class="release"> v1.1.1 &nbsp; 05-December-2004
         <ul class="release_text">
             <li> Added an option to set the text encoding of the emails, trough the .ini parameter "encoding" (default: utf-8) </li>

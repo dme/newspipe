@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.46 $"
+__revision__ = "$Revision: 1.47 $"
 __revision_number__ = __revision__.split()[1]
-__version__ = "1.1.2"
-__date__ = "2004-12-13"
+__version__ = "1.1.3"
+__date__ = "2004-12-21"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.46 2004/12/14 02:25:40 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.47 2004/12/22 03:13:23 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -835,7 +835,7 @@ class Item:
                 url_parts = urlparse.urlsplit(url)
                 if not url_parts[1]:
                     if not url_parts[0].upper() == 'FILE:':
-                        full_url = urlparse.urljoin(link, url)
+                        full_url = urlparse.urljoin(self.link, url)
                         html_version = html_version.replace (url, full_url)
                     # end if
                 # end if
