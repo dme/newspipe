@@ -1,6 +1,7 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.2 2004/07/24 14:32:17 rcarmo Exp $
+$Id: todo.txt,v 1.3 2004/07/24 14:47:48 rcarmo Exp $
+
 
 Testing
 -------
@@ -12,6 +13,7 @@ Testing
 0006 Validate text-only formatting in Series 60 phones (via IMAP)
 0007 Validate text-only formatting in Sony Ericsson phones (via IMAP)
 0008 Validate MIME formatting in IlohaMail (webmail)
+0009 Check mail headers (for Unix-style procmail filtering)
 
 
 Features
@@ -20,6 +22,8 @@ Features
 1000 Optionally send a text-only copy of some feeds to a second e-mail address
 1001 Create a "mobile" INI entry for 1000
 1002 Create a "sender" INI entry to force the sender to be different from the user's e-mail address (makes filtering easier)
+1003 Batch mode (one-shot run) for invoking via cron in Unix systems
+1004 Move to Mark's new 3.3 parser (seems it's a lot faster)
 
 
 Bugs
@@ -27,3 +31,13 @@ Bugs
 
 2000 HTML to text generates multiple copies of same link/image
 2001 Inline images do not display correctly in IlohaMail (webmail)
+2002 Parsing error in http://food.against.org/index.rdf (UTF-8 issues?)
+
+
+Documentation
+-------------
+
+3000 Add README, INSTALL, LICENSE, etc. (the usual GPL stuff, maybe based on the.taoofmac.com's short notes)
+3001 Add newspipe.ini.sample and newspipe.opml.sample
+3002 OPML attributes reference (digest, text only, etc., etc...)
+3003 HTML manual (maybe generated from above)
