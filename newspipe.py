@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.18 $"
+__revision__ = "$Revision: 1.19 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.2"
 __date__ = "2004-08-01"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.18 2004/08/26 02:55:57 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.19 2004/09/04 00:29:04 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -364,7 +364,7 @@ def createTextEmail(text, headers):
     t = '\r\n'.join([x+': '+y for x,y in headers])
     t += '\r\n\r\n'
     t += text
-    return t
+    return message_from_string(t.encode('latin1', 'replace'))
 # end def    
 
 
@@ -724,7 +724,7 @@ class Item:
         headers += [('X-Channel-description', makeHeader(self.channel.description)),]
 
         if plaintext:
-            return createTextEmail (text_version, headers).encode('latin1', 'replace')
+            return createTextEmail (text_version, headers)
         else:
             return createhtmlmail (html_version.encode('latin-1', 'replace'), text_version, headers, images, None, self.link)
         # end if
