@@ -1,0 +1,8 @@
+<script language="php">
+// $Id: config.php.sample,v 1.1 2004/10/10 00:11:27 rcarmo Exp $
+define( 'MAILBOX',           "{mailserver.local/imap/notls:143}INBOX" );
+define( 'MAIL_USERNAME',     "username" );
+define( 'MAIL_PASSWORD',     "password" );
+define( 'MAIL_TRASH_FOLDER', "Trash" );
+define( 'SITE_ROOT',         "/~username/webpipe");
+</script>

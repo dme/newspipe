@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+<channel><title>newspipe</title>
+<link>$url</link>
+<description>Meta-feed of newspipe items</description>
+<generator>webpipe</generator>
+<ttl>60</ttl>
+$items
+</channel>
+</rss>

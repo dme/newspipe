@@ -1,0 +1,10 @@
+<item>
+<title>$subject</title>
+<link>$url/body.php/$uid/view/</link>
+<guid>$url/body.php/$uid/view/</guid>
+<pubDate>$date</pubDate>
+<source>$from</source>
+<description>
+Size: $size bytes, Flag: $flag, Read: $read, Date: $shortdate 
+</description>
+</item>
