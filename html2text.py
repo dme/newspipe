@@ -122,7 +122,7 @@ def optwrap(text):
 	return result
 
 def hn(tag):
-	if tag[0] == 'h' and len(tag) == 2:
+	if tag and tag[0] == 'h' and len(tag) == 2:
 		try:
 			n = int(tag[1])
 			if n in range(1, 10): return n
