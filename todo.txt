@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.9 2004/07/26 22:41:36 rcarmo Exp $
+$Id: todo.txt,v 1.10 2004/07/26 23:26:14 reyesric Exp $
 
 
 Testing
@@ -27,7 +27,6 @@ Features
 Bugs
 ----
 
-2000 HTML to text generates multiple copies of same link/image
 2001 Inline images do not display correctly in IlohaMail (webmail)
 2003 MIME types for some images are generated as image/123131232 (random
 number). This seems to happen mostly on digest messages.
