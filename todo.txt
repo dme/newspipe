@@ -1,19 +1,19 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.8 2004/07/26 17:20:40 reyesric Exp $
+$Id: todo.txt,v 1.9 2004/07/26 22:41:36 rcarmo Exp $
 
 
 Testing
 -------
 
-0002 Validate MIME formatting in Thunderbird
+0002 Validate MIME formatting in Thunderbird - works save when bug 2003 happens
 0003 Validate MIME formatting in Outlook Express
 0004 Validate MIME formatting in Outlook 2003/Exchange
 0005 Validate text-only formatting in Blackberry (via Exchange)
 0006 Validate text-only formatting in Series 60 phones (via IMAP)
 0007 Validate text-only formatting in Sony Ericsson phones (via IMAP)
 0008 Validate MIME formatting in IlohaMail (webmail)
-0009 Check mail headers (for Unix-style procmail filtering)
+0009 Document mail headers better (for Unix-style procmail filtering)
 
 
 Features
@@ -21,7 +21,7 @@ Features
 
 1000 Optionally send a text-only copy of some feeds to a second e-mail address
 1001 Create a "mobile" INI entry for 1000
-1002 Create a "sender" INI entry to force the sender to be different from the user's e-mail address (makes filtering easier)
+1002 Create a "sender" INI entry to optionally force the sender to be different from the user's e-mail address (makes filtering easier)
 1005 Create a INI entry to set the delay between checks (default 60 minutes) (name of the parameter undetermined yet)
 
 Bugs
@@ -29,7 +29,9 @@ Bugs
 
 2000 HTML to text generates multiple copies of same link/image
 2001 Inline images do not display correctly in IlohaMail (webmail)
-next(2003)
+2003 MIME types for some images are generated as image/123131232 (random
+number). This seems to happen mostly on digest messages.
+next (2004)
 
 Documentation
 -------------
