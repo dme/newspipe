@@ -1,6 +1,6 @@
 <script language="php">
 // ======================================================================
-// $Id: lib.php,v 1.2 2004/10/11 00:56:38 rcarmo Exp $
+// $Id: lib.php,v 1.3 2004/10/11 23:47:18 rcarmo Exp $
 // IMAP Wrapper (non-XSLT version)
 // ======================================================================
 
@@ -92,17 +92,17 @@ class CIMAPWrapper extends CTemplate { // {{{
     $aValues["flag"] = $oMessage->flagged ? "off" : "on";
     $aValues["flag_icon"] = $oMessage->flagged ? "flag.gif" : "dot.gif";
     $aValues["flag_alt"] = $oMessage->flagged ? "[F]" : "[ ]";
-    $aValues["from"] = htmlentities(trim(preg_replace( '/("|:|<.+>)/', "", $oMessage->from )));
+    $aValues["from"] = htmlentities(trim(preg_replace( '/("|:|<.+>)/', "", imap_utf8($oMessage->from) )));
     $aValues["date"] = $oMessage->date;
     $aValues["size"] = $oMessage->size;
     $aValues["shortdate"] = strftime("%a %m %H:%M", strtotime($oMessage->date));
     return $aValues;
   } // getValues }}}
 
-  function messageList( $szTemplate ) { // {{{
+  function messageList( $szTemplate, $nBound = 30 ) { // {{{
     $this->readTemplate( $szTemplate );
     $szBuffer = "";
-    $aMessages = imap_headers( $this->m_oMailbox );
+    $aMessages = array_slice( imap_headers( $this->m_oMailbox ), 0, $nBound );
     $aMessages = imap_fetch_overview( $this->m_oMailbox, "1:" . count($aMessages) );
 
     // Sort messages by descending time
@@ -124,6 +124,8 @@ class CIMAPWrapper extends CTemplate { // {{{
   function getMessage( $szUid ) { // {{{
     $szBuffer = "";
     $oStructure = imap_fetchstructure( $this->m_oMailbox, $szUid, FT_UID );
+    if( !$oStructure )
+      redirect();
     list($aHeaders) = imap_fetch_overview( $this->m_oMailbox, $szUid, FT_UID );
     $aHeaders = array_merge($aHeaders, $this->getValues($aHeaders));
     
