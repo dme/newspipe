@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.15 2004/08/19 21:51:29 reyesric Exp $
+$Id: todo.txt,v 1.16 2004/09/02 11:19:45 rcarmo Exp $
 
 
 Testing
@@ -23,6 +23,8 @@ Features
 1001 Create a "mobile" INI entry for 1000
 1005 Create a INI entry to set the delay between checks (default 60 minutes) (name of the parameter undetermined yet)
 1006 Tray Icon for windows
+1007 Message-ID header (generated from guid from single item feeds and a
+digest of all guids for digest feeds)
 
 Bugs
 ----
