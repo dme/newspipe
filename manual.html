@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.11 2004/07/26 16:41:54 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.12 2004/08/01 16:23:37 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
@@ -15,7 +15,8 @@ TR.odd { background-color: #d8e6ff; }
 TT, .fixed { font-family: Courier New, Courier, fixed; }
 .fixed { font-weight: bold; }
 .flat { text-align: center; background-color: #d0e0ff; border: 0px solid #8080d0; border-spacing: 0px; }
-.release { font-weight: bold; color: #990000; list-style: none;}
+.release { font-weight: bold; color: #990000; list-style: none; padding-top: 12pt;}
+.release_text { font-weight: normal; color: black; }
 
 .header { clear: both; }
 .toc {float: right; background-color: #d8e6ff; padding: 20px; margin: 10pt;}
@@ -322,10 +323,27 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
-<li class="release"> 21-July-2004 v1.0</li>
-	<ul>
-		<li>Initial release.</li>
-	</ul>
+	<li class="release"> v1.0.1  01-August-2004 (Changes by Rui and Ricardo)
+		<ul class="release_text">
+			<li> HTML to Text conversion generates only one footnote for each link/image</li>
+			<li> When downloading images, retry up to 3 times on timeouts </li>
+			<li> Store all log, cache and data files at $HOME/.newspipe when running on UNIX, or $APPDATA/.newspipe when running on Windows</li>
+			<li> Bugfix 2002: Parsing error in http://food.against.org/index.rdf </li>
+			<li> Added "sender" override</li>
+			<li> Changed mail processing to allow for any sender/destination </li>
+			<li> Added support for sending a "mobile" version to an alternate e-mail address:
+				<ul>
+					<li>"mobile" attribute in OPML determines which feeds are copied</li>
+					<li>ownerMobile value at top of OPML determines alternate e-mail address (point it to your MMS or mobile phone address)</li>
+				</ul></li>
+			<li> Refactoring of error handling in image download</li>
+		</ul>
+	</li>
+	<li class="release"> v1.0  21-July-2004 
+		<ul class="release_text">
+			<li>Initial release.</li>
+		</ul>
+	</li>
 </ul>
 
 </div>
