@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.10 2004/07/26 23:26:14 reyesric Exp $
+$Id: todo.txt,v 1.11 2004/07/27 00:30:07 reyesric Exp $
 
 
 Testing
@@ -30,7 +30,7 @@ Bugs
 2001 Inline images do not display correctly in IlohaMail (webmail)
 2003 MIME types for some images are generated as image/123131232 (random
 number). This seems to happen mostly on digest messages.
-next (2004)
+2004 HTML diffs seems not to be working on digest messages.
 
 Documentation
 -------------
