@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.10 $"
+__revision__ = "$Revision: 1.11 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.10 2004/07/31 03:01:18 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.11 2004/07/31 03:15:17 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -1068,7 +1068,7 @@ class FeedWorker (threading.Thread):
 
                 # second pass for mobile copy, provided we could send the first one
                 if( (feed.get('mobile','0') == '1' ) and movil_destino and email_ok ):
-                   plaintext = 1
+                   plaintext = True
                    if config.get('send_immediate', '0') == '1':
                       try:
                           emails = [item.GetEmail(envio, movil_destino, plaintext) for item in items]
@@ -1164,10 +1164,10 @@ def MainLoop():
 
                 if opml:
                     email_destino = (opml['head']['ownerName'].strip('"'), opml['head']['ownerEmail'])
-                    if( opml['head']['ownerMobile'] ):
-                      movil_destino = (opml['head']['ownerName'].strip('"'), opml['head']['ownerMobile'])
+                    if( opml['head'].has_key('ownerMobile') ):
+                        movil_destino = (opml['head']['ownerName'].strip('"'), opml['head']['ownerMobile'])
                     else:
-                      movil_destino = false
+                        movil_destino = False
 
                     if not historico_feeds or not historico_posts:
                         historico_feeds, historico_posts = CargarHistoricos(opml['head']['title'])
@@ -1252,6 +1252,7 @@ def MainLoop():
             # end if
         except:
             log.exception ('Unhandled exception')
+            raise  # stop the loop, to avoid infinite exceptions loops ;)
     # end while
 # end def
 
