@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.1 2004/07/24 23:08:50 rcarmo Exp $">
+<meta name="version" value="$Id: manual.html,v 1.2 2004/07/24 23:31:31 rcarmo Exp $">
 <style>
 BODY, P { font-family: Arial, Helvetica, sans serif; }
 </style>
@@ -25,6 +25,37 @@ BODY, P { font-family: Arial, Helvetica, sans serif; }
 <H3>.INI file Options</H3>
 
 <H3>OPML Structure</H3>
+
+<H2>Mail Headers</H2>
+
+<p>Newspipe adds a number of mail headers to messages that you can use to filter or classify them into folders, and which also provide some useful information as to what it has done to parse the feed:</p>
+
+<table class="flat">
+  <tr>
+    <th>Header</th><th>Values & Meaning</th>
+  </tr>
+  <tr>
+    <td class="fixed">X-Item-Attributes</td><td><i>add meaning of body, modified_parsed, link, title</i></td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Item-Text-Key</td><td><i>body</i></td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Newspipe-Version</td><td>program version number and revision</td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Channel-Feed</td><td>feed URL (same as the xmlURL field in the OPML file)</td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Channel-X-Cache-Result</td><td>whether the data was downloaded ("Downloaded")</td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Channel-Title</td><td>the feed title</td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Channel-Description</td><td>the feed description</td>
+  </tr>
+</table>
 
 <H2>Acknowledgements</H2>
 <p>
