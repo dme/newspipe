@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.15 $"
+__revision__ = "$Revision: 1.16 $"
 __revision_number__ = __revision__.split()[1]
-__version__ = "1.0.1b"
+__version__ = "1.0.1"
 __date__ = "2004-08-01"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.15 2004/08/02 16:52:04 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.16 2004/08/18 23:57:59 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -690,14 +690,18 @@ class Item:
                 i = 0
                 for url in urls:
                     if url:
-                        ext = os.path.splitext(url)[1]
-                        if '?' in ext:
-                            ext = ext[:ext.find('?')]
+                        # check if this url was already proccesed
+                        previous = [x['url'] for x in images]
+                        if not (url in previous):
+                            ext = os.path.splitext(url)[1]
+                            if '?' in ext:
+                                ext = ext[:ext.find('?')]
+                            # end if
+                            name = 'image%d%s' % (i,ext)
+                            html_version = html_version.replace('%s' % (url,), '%s' % (name,))
+                            images += [{'name':name, 'url':url},]
+                            i += 1
                         # end if
-                        name = 'image%d%s' % (i,ext)
-                        html_version = html_version.replace('%s' % (url,), '%s' % (name,))
-                        images += [{'name':name, 'url':url},]
-                        i += 1
                     # end if
                 # end for
             # end if
@@ -1274,3 +1278,4 @@ if __name__ == '__main__':
         MainLoop()
     except KeyboardInterrupt:
         pass
+
