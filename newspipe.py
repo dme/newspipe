@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.54 $"
+__revision__ = "$Revision: 1.55 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.7"
 __date__ = "2005-03-20"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.54 2005/03/21 00:37:41 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.55 2005/04/04 03:19:23 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -78,7 +78,8 @@ OPML_DEFAULTS = {
     'mobile': '0',
     'download_images': '1',
     'check_time': '',
-    'mobile_time': ''
+    'mobile_time': '',
+    'remove': ''
 }
 
 CONFIG_DEFAULTS = {
@@ -95,7 +96,11 @@ CONFIG_DEFAULTS = {
     'proxy': '',
     'threading': '0',
     'subject': '',
-    'priority' : '1'
+    'priority' : '1',
+    'smtp_auth' : '0',
+    'smtp_user' : '',
+    'smtp_pass' : '',
+    'from_address' : ''
 }
 
 DEBUG = False
@@ -882,7 +887,7 @@ class Item:
         #return self.original.__repr__()
     # end def
 
-    def GetEmail(self, envio, destinatario, format="multipart", encoding='utf-8', include_threading=False, subject_prefix=None):
+    def GetEmail(self, envio, destinatario, format="multipart", encoding='utf-8', include_threading=False, subject_prefix=None, from_address=None):
         global historico_posts
         template = """
 <font face="Arial,Helvetica,Geneva">
@@ -962,10 +967,16 @@ class Item:
             subject = subject_prefix + ': ' + self.subject
         else:
             subject = self.subject
+            
+        to_header = ', '.join(['"%s" <%s>"' % (destinatario[0], each.strip()) for each in destinatario[1].split(',')])
+        if from_address:
+            from_header = from_address
+        else:
+            from_header = '"%s" <%s>' % (makeHeader(self.channel.title), envio)
 
         headers = []
-        headers += [('From', '"%s" <%s>' % (makeHeader(self.channel.title), envio)),]
-        headers += [('To', '"%s" <%s>' % (destinatario[0], destinatario[1],)),]
+        headers += [('From', from_header),]
+        headers += [('To', to_header),]
         headers += [('Subject', makeHeader(subject)),]
         msgid = email.Utils.make_msgid()
         headers += [('Message-ID', msgid),]
@@ -1023,6 +1034,11 @@ class Item:
                 return createhtmlmail (html_version, text_version, headers, images, None, self.link, encoding)
         # end if
     # end def
+    
+    def removeRX (self, regexp):
+        rc = re.compile (regexp, re.I+re.S+re.X)
+        self.texto = re.sub(rc, '', self.texto)
+    # end def
 # end class
 
 
@@ -1050,6 +1066,10 @@ def LeerConfig():
     parser.add_option("-r", "--proxy", dest="proxy", help="addess and port of the proxy server to use")
     parser.add_option("-a", "--threading", action="store_const", const="1", dest="threading", help="include threading headers in the emails")
     parser.add_option("", "--subject", dest="subject", help="add a fixed text to the subject of every message")
+    parser.add_option("", "--smtp_authentication", action="store_const", const="0", dest="smtp_auth", help="authenticate with SMTP server")
+    parser.add_option("", "--smtp_auth_user", dest="smtp_user", help="SMTP username used for authentication")
+    parser.add_option("", "--smtp_auth_pass", dest="smtp_pass", help="SMTP password used for authentication")
+
     
     (options, args) = parser.parse_args()
     
@@ -1097,18 +1117,26 @@ def LeerConfig():
 
 semaforo_email = _threading.BoundedSemaphore()
 
-def EnviarEmails(msgs, server):
+def EnviarEmails(msgs, server, auth, auth_user, auth_pass):
     if msgs:
         semaforo_email.acquire()
         try:
             smtp = smtplib.SMTP(server)
+            # authenticate with SMTP server when there's need to
+            if auth:
+                smtp.login(auth_user,auth_pass);
+
             smtp.set_debuglevel(0)
 
             count = 0;
             for msg in msgs:
-                if msg == None: continue
+                if msg == None: 
+                    continue
+
                 fromaddr = msg['From']
-                toaddr = msg['To']
+
+                r = re.compile('<(.+?)>')
+                toaddr = r.findall(msg['To'])
 
                 try:
                     # build envelope and send message
@@ -1122,8 +1150,8 @@ def EnviarEmails(msgs, server):
                     sleep(3)
                     smtp.sendmail(fromaddr, toaddr, msg)
                 # end try
-
             # end for
+
             smtp.quit()
             if count != len(msgs):
                 note = " (" + str(len(msgs)-count) +" failed)"
@@ -1421,6 +1449,9 @@ class FeedWorker (_threading.Thread):
                     channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed['download_link'] == '1', feed['diff'] == '1', feed['download_images'] == '1', feed)
                     for elemento in xml['items']:
                         item = channel.NewItem(elemento, xml["encoding"])
+                        
+                        if feed.has_key('remove'):
+                            item.removeRX (feed['remove'])
 
                         if historico_posts.has_key(item.urlHash):
                             historico_posts[item.urlHash]['timestamp'] = datetime.now()
@@ -1473,15 +1504,15 @@ class FeedWorker (_threading.Thread):
                     
                 if config['send_immediate'] == '1':
                     try:
-                        emails = [item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix) for item in items]
-                        EnviarEmails (emails, config['smtp_server'])
+                        emails = [item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix, config['from_address']) for item in items]
+                        EnviarEmails (emails, config['smtp_server'], config['smtp_auth'] == '1',config['smtp_user'],config['smtp_pass'])
                     except Exception, e:
                         email_ok = False
                         mylog.exception ('Error enviando los emails: %s' % (str(e),))
                     # end try
                 else:
                     for item in items:
-                        self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix))
+                        self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix, config['from_address']))
                     # end for
                 # end if
 
@@ -1501,8 +1532,9 @@ class FeedWorker (_threading.Thread):
                     if send:
                         if config['send_immediate'] == '1':
                             try:
-                                emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix) for item in items]
-                                EnviarEmails (emails, config['smtp_server'])
+                                emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix, config['from_address']) for item in items]
+                                EnviarEmails (emails, config['smtp_server'], config['smtp_auth'] == '1',config['smtp_user'],config['smtp_pass'])
+
                             except Exception, e:
                                 email_ok = False
                                 mylog.exception ('Error enviando los emails: %s' % (str(e),))
@@ -1645,6 +1677,11 @@ def MainLoop():
                     else:
                         movil_destino = False
 
+                    if opml['head'].has_key('fromEmail'):
+                        name = opml['head'].get('fromName', 'Newspipe')
+                        from_address = name.strip('"') + ' <' + opml['head']['fromEmail'] + '>'
+                        config['from_address'] = from_address
+                        
                     if not historico_feeds or not historico_posts:
                         historico_feeds, historico_posts = CargarHistoricos(opml['head']['title'])
 
@@ -1689,7 +1726,7 @@ def MainLoop():
                     # end while
 
                     try:
-                        EnviarEmails (emails, config['smtp_server'])
+                        EnviarEmails (emails, config['smtp_server'], config['smtp_auth'] == '1',config['smtp_user'],config['smtp_pass'])
                     except KeyboardInterrupt:
                         raise
                     except Exception, e:
