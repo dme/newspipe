@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.32 $"
+__revision__ = "$Revision: 1.33 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
 __date__ = "2004-10-08"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.32 2004/10/11 00:56:37 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.33 2004/10/11 22:03:41 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -813,7 +813,7 @@ class Item:
                             if '?' in ext:
                                 ext = ext[:ext.find('?')]
                             # end if
-                            name = 'image%d%s' % (i,ext)
+                            name = '%s%s' % (md5texto(filename),ext)
                             html_version = html_version.replace('%s' % (url,), 'cid:%s' % (name,))
                             images += [{'name':name, 'url':url, 'filename':filename},]
                             i += 1
