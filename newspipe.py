@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.6 $"
+__revision__ = "$Revision: 1.7 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.6 2004/07/26 16:55:11 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.7 2004/07/26 17:20:40 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -554,10 +554,6 @@ class Item:
 
         self.original = original
         self.link = GetValue(original.get('link', channel.htmlUrl))
-
-        if isinstance(self.link, unicode):
-            self.link = self.link.encode('latin1', 'replace')
-        # end if
 
         self.texto_nuevo = ''
         self.text_key = 'None'

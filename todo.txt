@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.7 2004/07/25 12:31:31 rcarmo Exp $
+$Id: todo.txt,v 1.8 2004/07/26 17:20:40 reyesric Exp $
 
 
 Testing
@@ -29,8 +29,7 @@ Bugs
 
 2000 HTML to text generates multiple copies of same link/image
 2001 Inline images do not display correctly in IlohaMail (webmail)
-2002 Parsing error in http://food.against.org/index.rdf (UTF-8 issues?)
-
+next(2003)
 
 Documentation
 -------------
@@ -42,4 +41,4 @@ Documentation
 Improvements (ideas for the future)
 -----------------------------------
 4000 Change the "historic" files' format from pickle to something more memory-efficient. Should try SHELVE or DBM. ZODB might be overkill.
-4001 Put cache files in a subdirectory
+next (4002)
