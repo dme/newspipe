@@ -1,14 +1,15 @@
 """html2text: Turn HTML into equivalent Markdown-structured text."""
-__version__ = "2.1"
+__version__ = "2.11"
 __author__ = "Aaron Swartz (me@aaronsw.com)"
 __copyright__ = "(C) 2004 Aaron Swartz. GNU GPL 2."
 
 # TODO:
+#   Support decoded entities with unifiable.
 #	Word wrap. 
-#	Buffering for, e.g., rss2email (fixes :s too). 
+#	Fix :s using buffering
 #	Relative URl resolution
 
-import re, sys, urllib, htmlentitydefs, StringIO
+import re, sys, urllib, htmlentitydefs, codecs, StringIO
 import sgmllib
 sgmllib.charref = re.compile('&#([xX]?[0-9a-fA-F]+)[^0-9a-fA-F]')
 
@@ -27,7 +28,7 @@ def name2cp(k):
 	else:
 		k = htmlentitydefs.entitydefs[k]
 		if k.startswith("&#") and k.endswith(";"): return int(k[2:-1]) # not in latin-1
-		return ord(k.decode('ISO-8859-1'))
+		return ord(codecs.latin_1_decode(k)[0])
 
 unifiable = {'rsquo':"'", 'lsquo':"'", 'rdquo':'"', 'ldquo':'"', 
 'copy':'(C)', 'mdash':'--', 'nbsp':' ', 'rarr':'->', 'larr':'<-', 'middot':'*',
@@ -134,6 +135,40 @@ class _html2text(sgmllib.SGMLParser):
 	def unknown_endtag(self, tag):
 		self.handle_tag(tag, None, 0)
 
+	def previousIndex(self, attrs):
+		""" returns the index of certain set of attributes (of a link) in the
+			self.a list
+
+			If the set of attributes is not found, returns None
+		"""
+
+		for i, a in enumerate(self.a):
+			if a.has_key('href') and a['href'] == attrs['href']:
+				if a.has_key('alt'):
+					if attrs.has_key('alt'):
+						if a['alt'] == attrs['alt']:
+							match = True
+						else:
+							match = False
+						# end if
+					else:
+						match = False
+					# end if
+				else:
+					match = True
+				# end if
+			else:
+				match = False
+			# end if
+
+			if match:
+				return i
+			# end if
+		# end for
+
+		return None
+	# end def    
+
 	def handle_tag(self, tag, attrs, start):
 		attrs = fixattrs(attrs)
 	
@@ -173,24 +208,40 @@ class _html2text(sgmllib.SGMLParser):
 				if self.astack:
 					a = self.astack.pop()
 					if a:
-						self.acount += 1
-						a['count'] = self.acount
-						a['outcount'] = self.outcount
-						self.o("][" + `a['count']` + "]")
-						self.a.append(a)
+						i = self.previousIndex(a)
+						if (i is not None):
+							number = i+1
+							a = self.a[i]
+						else:
+							self.acount += 1
+							number = self.acount
+							a['count'] = self.acount
+							a['outcount'] = self.outcount
+							self.a.append(a)
+						# end if
+						self.o("][" + `number` + "]")
 		
 		if tag == "img" and start:
-			self.acount += 1
 			attrs = dict(attrs)
+
 			if attrs.has_key('src'):
 				attrs['href'] = attrs['src']
-				attrs['count'] = self.acount
-				attrs['outcount'] = self.outcount
-				self.a.append(attrs)
+				i = self.previousIndex(attrs)
+				if (i is not None):
+					number = i+1
+					attrs = self.a[i]
+				else:
+					self.acount += 1
+					number = self.acount
+					attrs['count'] = self.acount
+					attrs['outcount'] = self.outcount
+					self.a.append(attrs)
+				# end if
+	
 				self.o("![")
 				if attrs.has_key('alt'): self.o(attrs['alt'])
-				self.o("]["+`self.acount`+"]")
-		
+				self.o("]["+`number`+"]")
+	
 		if tag in ["ol", "ul"]:
 			if start:
 				self.list.append({'name':tag, 'num':0})
@@ -243,7 +294,7 @@ class _html2text(sgmllib.SGMLParser):
 				self.startpre = 0
 			
 			bq = (">" * self.blockquote)
-			if not (force and data and data[0] == ">"): bq += (" "*bool(self.blockquote))
+			if not (force and data and data[0] == ">") and self.blockquote: bq += " "
 			
 			if self.pre:
 				bq += "    "
