@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.50 $"
+__revision__ = "$Revision: 1.51 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.5"
 __date__ = "2005-02-05"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.50 2005/02/06 03:04:54 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.51 2005/02/13 04:20:08 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -91,7 +91,8 @@ CONFIG_DEFAULTS = {
     'can_pipe': '0',
     'encoding': 'utf-8',
     'proxy': '',
-    'threading': '0'
+    'threading': '0',
+    'subject': ''
 }
 
 DEBUG = False
@@ -797,7 +798,7 @@ class Item:
         #return self.original.__repr__()
     # end def
 
-    def GetEmail(self, envio, destinatario, format="multipart", encoding='utf-8', include_threading=False):
+    def GetEmail(self, envio, destinatario, format="multipart", encoding='utf-8', include_threading=False, subject_prefix=None):
         global historico_posts
         template = """
 <font face="Arial,Helvetica,Geneva">
@@ -872,6 +873,9 @@ class Item:
         if envio == None:
             envio = destinatario[1]
         # end if
+        
+        if subject_prefix:
+            self.subject = subject_prefix + ': ' + self.subject
 
         headers = []
         headers += [('From', '"%s" <%s>' % (makeHeader(self.channel.title), envio)),]
@@ -956,6 +960,7 @@ def LeerConfig():
     parser.add_option("-u", "--encoding", dest="encoding", help="unicode encoding to use when composing the emails")
     parser.add_option("-r", "--proxy", dest="proxy", help="addess and port of the proxy server to use")
     parser.add_option("-a", "--threading", action="store_const", const="1", dest="threading", help="include threading headers in the emails")
+    parser.add_option("", "--subject", dest="subject", help="add a fixed text to the subject of every message")
     
     (options, args) = parser.parse_args()
     
@@ -1355,10 +1360,11 @@ class FeedWorker (_threading.Thread):
                     
                 encoding = config['encoding']
                 include_threading = config['threading'] == '1'
+                subject_prefix = config['subject']
                     
                 if config['send_immediate'] == '1':
                     try:
-                        emails = [item.GetEmail(envio, email_destino, format, encoding, include_threading) for item in items]
+                        emails = [item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix) for item in items]
                         EnviarEmails (emails, config['smtp_server'])
                     except Exception, e:
                         email_ok = False
@@ -1366,7 +1372,7 @@ class FeedWorker (_threading.Thread):
                     # end try
                 else:
                     for item in items:
-                        self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding, include_threading))
+                        self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix))
                     # end for
                 # end if
 
@@ -1374,7 +1380,7 @@ class FeedWorker (_threading.Thread):
                 if( (feed['mobile'] == '1' ) and movil_destino and email_ok ):
                    if config['send_immediate'] == '1':
                       try:
-                          emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading) for item in items]
+                          emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix) for item in items]
                           EnviarEmails (emails, config['smtp_server'])
                       except Exception, e:
                           email_ok = False
@@ -1382,7 +1388,7 @@ class FeedWorker (_threading.Thread):
                       # end try
                    else:
                       for item in items:
-                          self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading))
+                          self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix))
                       # end for
                   # end if
 

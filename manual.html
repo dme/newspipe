@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.25 2005/02/06 03:04:54 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.26 2005/02/13 04:20:08 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -22,6 +22,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 .toc ul {list-style: none; margin-left: 0;}
 .toc, .toc p {text-align: center;}
 .toc li {font-size: 9pt; }
+.opmlcode {font-family: Courier New, Courier, fixed; }
+.opmlcode tt {color: #990000;}
+.opmlcode .tag {color: #990000; font-weight: bold}
+.opmlcode .attr {color: #0000ee;}
+.opmlcode .text {color: #006666;}
 </style>
 <title>Newspipe</title>
 </head>
@@ -239,46 +244,58 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <p>Since <a href="#opml">OPML</a> is an hierarchical format, you can have multiple <tt>outline</tt> items nested inside each other. Some <tt>outline</tt> items will denote single feeds, and some will group related sets of feeds together.</p>
 <p><tt>Newspipe</tt> allows you to use any sort of layout you like, and lets you set feed options on a group basis or for a single feed:</p>
 
-<pre>
-&lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;
-&lt;opml version="1.1"&gt;
-  &lt;head&gt;
-    &lt;title&gt;test.opml&lt;/title&gt;
-      &lt;ownerName&gt;Newspipe User&lt;/ownerName&gt;
-      &lt;ownerEmail&gt;newspipe@localhost&lt;/ownerEmail&gt;
-      &lt;ownerMobile&gt;newspipe@mobile.net&lt;/ownerMobile&gt;
-  &lt;/head&gt;
-  &lt;body&gt;
-    &lt;!-- daily digests --&gt;
-    &lt;outline text="Digest" digest="1" delay="1440"&gt;
-      &lt;outline description="Boing Boing"
-         htmlUrl="http://boingboing.net"
-         title="Boing Boing Blog"
-         xmlUrl="http://boingboing.net/rss.xml"
-      /&gt;
-      &lt;outline description="Private Feed"
-         htmlUrl="http://development.local"
-         auth="username:password"
-         xmlUrl="http://development.local/rss.xml"
-      /&gt;
-      ...
-    &lt;/outline&gt;
+<p>Example opml file:</p>
 
-    &lt;!-- normal feeds --&gt;
-    &lt;outline description="One message per item" delay="30"&gt;
-      &lt;!-- single items are _also_ pushed to my mobile --&gt;
-      &lt;outline description="News for nerds, stuff that matters"
-        htmlUrl="http://slashdot.org/"
-        title="Slashdot"
-        xmlUrl="http://slashdot.org/slashdot.rss"
-        mobile="1"
-      /&gt;
-      
-      ...
-    &lt;/outline&gt;
-  &lt;/body&gt;
-&lt;opml&gt;
-</pre>
+<p class="opmlcode">
+&nbsp;&nbsp;&nbsp;<tt>&lt;?<span class="tag">xml</span> <span class="attr">version</span>=<span class="text">"1.0"</span> <span class="attr">encoding</span>=<span class="text">"ISO-8859-1"</span>?></tt><br/>
+&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">opml</span> <span class="attr">version</span>=<span class="text">"1.1"</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">head</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">title</span>></tt>test.opml<tt>&lt;/title></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">ownerName</span>></tt>Your name goes here<tt>&lt;/ownerName></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">ownerEmail</span>></tt>your.name@example.com<tt>&lt;/ownerEmail></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">head</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">body</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"General"</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"dive into mark"</span><br/> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">description</span>=<span class="text">"A lot of effort went into making this effortless."</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">htmlUrl</span>=<span class="text">"http://diveintomark.org"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">xmlUrl</span>=<span class="text">"http://diveintomark.org/xml/atom.xml"</span> /></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"The Tao of Mac"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">description</span>=<span class="text">"mac.against.org"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">htmlUrl</span>=<span class="text">"http://the.taoofmac.com/"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">xmlUrl</span>=<span class="text">"http://the.taoofmac.com/space/RecentChanges?format=rss"</span> /></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">outline</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"1 Email per feed"</span> <span class="attr">digest</span>=<span class="text">"1"</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"The Scobleizer Weblog"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">description</span>=<span class="text">"Human Aggregator of geek life"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">htmlUrl</span>=<span class="text">"http://radio.weblogs.com/"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">xmlUrl</span>=<span class="text">"http://radio.weblogs.com/0001011/rss.xml"</span> /></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"Boing Boing Blog"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">description</span>=<span class="text">"The Blog of Wonderful things"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">htmlUrl</span>=<span class="text">"http://boingboing.net"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">xmlUrl</span>=<span class="text">"http://boingboing.net/rss.xml"</span> /></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"1 email per feed, but without titles"</span> <span class="attr">titles</span>=<span class="text">"0"</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"Scripting News"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">description</span>=<span class="text">"All scripting, all the time, forever."</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">htmlUrl</span>=<span class="text">"http://www.scripting.com/"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">xmlUrl</span>=<span class="text">"http://www.scripting.com/rss.xml"</span> /></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">outline</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">outline</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"Download the linked page"</span> <span class="attr">download_link</span>=<span class="text">"1"</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"ongoing"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">description</span>=<span class="text">"Ongoing fragmented essay by Tim Bray."</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">htmlUrl</span>=<span class="text">"http://www.tbray.org/ongoing/"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">xmlUrl</span>=<span class="text">"http://www.tbray.org/ongoing/ongoing.rss"</span> /></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">outline</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"Plain text emails"</span> <span class="attr">textonly</span>=<span class="text">"1"</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"Wired News"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">description</span>=<span class="text">"Wired News"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">htmlUrl</span>=<span class="text">"http://www.wired.com"</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">xmlUrl</span>=<span class="text">"http://www.wired.com/news/feeds/rss2/0,2610,,00.xml"</span> /></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">outline</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">body</span>></tt><br/>
+&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">opml</span>></tt><br/>
+</p>
 
 <table class="flat">
   <tr>
@@ -461,10 +478,15 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
+    <li class="release"> asdf
+        <ul class="release_text">
+            <li> New .ini parameter <tt>subject</tt>, can be used to add a string to the subject of every email </li>
+        </ul>
+    </li>
     <li class="release"> v1.1.5 &nbsp; 05-February-2005 
         <ul class="release_text">
             <li> Added <tt>List-Id</tt> and <tt>Content-Location</tt> headers, as suggested in <a href="https://sourceforge.net/tracker/index.php?func=detail&aid=1109286&group_id=114820&atid=669525"> this feature request</a> </li>
-            <li> The <tt>References</tt> and <tt>In-Reply-To</tt> will only be present when the new "threading" parameter is set to 1 in the .ini file. It's been reported that they annoy some users :) </li>
+            <li> The <tt>References</tt> and <tt>In-Reply-To</tt> will only be present when the new <tt>threading</tt> parameter is set to 1 in the .ini file. It's been reported that they annoy some users :) </li>
             <li> Removed some debugging headers. They will only be included in the mails when the program is run in DEBUG mode. </li>
             <li> Try to use the feed author email as From address, when possible </li>
             <li> Fixed typo in parameters: immediate </li>
