@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.17 2004/10/10 18:04:05 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.18 2004/10/11 00:56:37 rcarmo Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
@@ -29,7 +29,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <body>
 
 <div class="header">
-	<H1>Newspipe</H1>
+	<H1><img src="newspipe.jpg" align=absmiddle>Newspipe</H1>
 </div>
 
 <div class="toc">
@@ -161,7 +161,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
   <tr>
     <td class="fixed">textonly</td>
     <td>0</td>
-    <td>if set to 1, all the messages sent by <tt>newspipe</tt> will be sent in plain text format.</td>
+    <td>if set to 1, all the messages sent by <tt>newspipe</tt> will be sent in plaintext format, without any HTML. The plaintext version is formatted in <a href="#markdown">Markdown</a> and includes references to all links, images, etc.</td>
   </tr>
   <tr class="odd">
     <td class="fixed">log_console</td>
@@ -198,7 +198,12 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>0</td>
     <td>If set to 1, <tt>newspipe</tt> will send all messages as they are parsed instead of in a single long SMTP transaction at the end of its run. Useful to avoiding choking your SMTP server with a lot of messages at once.</td>
   </tr>
-  <tr>
+    <tr>
+    <td class="fixed">multipart</td>
+    <td>on</td>
+    <td>If set to <tt>on</tt>, <tt>newspipe</tt> will include a plaintext version of item contents as well as an HTML version.<p>Setting this to <tt>off</tt> sends <i>only</i> HTML and images, and might be desirable if you want to receive slightly smaller messages - or if you use a mailer/webmail that has trouble with alternative versions of the same message (<a href="http://www.gmail.com">Gmail</a>, for instance, defaults to showing plaintext versions of messages).</td>
+  </tr>
+  <tr class="odd">
     <td class="fixed">can_pipe</td>
     <td>0</td>
     <td><p>Enables <tt>pipe://</tt> URI support. When set to 1, the program will accept feed URLs that start with <tt>pipe://</tt> - and arbitrary protocol name used to tell <tt>newswire</tt> that to get the feed data, it should run the program or command after the <tt>pipe://</tt> and use its standard output as feed data.</p>
@@ -372,7 +377,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td class="fixed">In-Reply-To</td><td>Last <tt>Message-ID</tt> generated from this feed (to simulate e-mail threading)</td>
   </tr>
   <tr>
-    <td class="fixed">References</td><td>List of <tt>Message-ID<tt>s generated from this feed (to simulate e-mail threading)</td>
+    <td class="fixed">References</td><td>List of <tt>Message-ID</tt>s generated from this feed (to simulate e-mail threading)</td>
   </tr>
 </table>
 
@@ -380,10 +385,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Acknowledgements</H2>
 <p>
 <ul>
-<li><a href="http://the.taoofmac.com/space/">Rui Carmo</a>, for writing this documentation, for his Linux and MacOS testing and a lot of suggestions and bug reports.</li>
+<li><a href="http://the.taoofmac.com/space/">Rui Carmo</a>, for the initial logo, writing this documentation, for his Linux and MacOS testing and a lot of suggestions and bug reports.</li>
 <li><a href="http://www.litux.org">Bruno David Rodrigues</a>, for a number of <tt>MIME</tt> and <tt>UTF-8</tt> fixes, e-mail threading headers and memory usage debugging.</li>
 <li><a href="http://www.diveintomark.org/">Mark Pilgrim</a>, author of <tt>feedparser.py</tt> (<a href="http://www.feedparser.org/">download feedparser.py</a>)</li> 
 <li><a href="http://www.aaronsw.com/">Aaron Swartz</a>, author of <tt>html2text.py</tt> (<a href="http://www.aaronsw.com/2002/html2text">download html2text.py</a>)</li>
+<li>Newspaper image from <a href="http://freetubes.com/">Free Tubes</a>, used with permission.</li>
 </ul>
 
 <a name="contact"></a>
@@ -398,6 +404,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li><a name="rss"></a><a href="http://blogs.law.harvard.edu/tech/rss">RSS 2.0 Specification</a></li>
 <li><a name="atom"></a><a href="http://www.atomenabled.org/">Atom Enabled</a></li>
 <li><a name="opml"></a><a href="http://www.opml.org/spec">OPML Specification</a>
+<li><a name="markdown"></a><a href="http://daringfireball.net/projects/markdown/">Markdown Homepage</a>
 </ul>
 
 <a name="changelog"></a>

@@ -1,6 +1,6 @@
 <script language="php">
 // ======================================================================
-// $Id: lib.php,v 1.1 2004/10/10 00:11:27 rcarmo Exp $
+// $Id: lib.php,v 1.2 2004/10/11 00:56:38 rcarmo Exp $
 // IMAP Wrapper (non-XSLT version)
 // ======================================================================
 
@@ -139,6 +139,7 @@ class CIMAPWrapper extends CTemplate { // {{{
         }
       }
     }
+    $szBuffer = preg_replace( "/cid:/", "", $szBuffer );
     return(array_merge( $aHeaders,
                         array( "body" => $szBuffer )));
   } // getMessage }}}
@@ -148,10 +149,12 @@ class CIMAPWrapper extends CTemplate { // {{{
     $oStructure = imap_fetchstructure( $this->m_oMailbox, $szUid, FT_UID );
     // Brutally hard-coded for new newspipe MIME structure. Soft-fails with
     // a warning message.
-    foreach( @$oStructure->parts[1]->parts as $key => $val ) {
-       if( @$val->id == $szPart ) {
-        $szContent = base64_decode( imap_fetchbody( $this->m_oMailbox, $szUid, "2." . ($key+1), FT_UID ) );
-        $szSubtype = $val->subtype;
+    $nParts = count($oStructure->parts);
+    $oBranch = $oStructure->parts[$nParts-1]->parts;
+    foreach( $oBranch as $key => $val) {
+      if( @strpos($val->id, $szPart) ) {
+        $szContent = base64_decode( imap_fetchbody( $this->m_oMailbox, $szUid, "$nParts." . ($key+1), FT_UID ) );
+        $szSubtype = $oBranch->subtype;
         $szType = strtolower( $gaIMAPTypes[$val->type] . "/" . $szSubtype);
         return array( $szType, strlen($szContent), $szContent );
       }

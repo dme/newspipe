@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<rss version="2.0">
+<channel>
+<title>newspipe unit test</title>
+<link>file://test</link>
+<description>Test feed for unit testing</description>
+<generator>vim</generator>
+<ttl>60</ttl>
+<item>
+<title>A Single Item</title>
+<link>file://test</link>
+<guid>file://test</guid>
+<pubDate>Sun, 10 Oct 2004 23:59:59 +0000</pubDate>
+<source>keyboard</source>
+<description>
+Foo bar baz &lt;img src="http://localhost/~rcarmo/newspipe.jpg"&gt;
+</description>
+</item>
+</channel>
+</rss>

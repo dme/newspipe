@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.31 $"
+__revision__ = "$Revision: 1.32 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
 __date__ = "2004-10-08"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.31 2004/10/10 22:41:26 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.32 2004/10/11 00:56:37 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -294,17 +294,17 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
     #
     writer.startmultipartbody("alternative")
     writer.flushheaders()
-
+    
     #
     # the plain text section
     #
-
-    subpart = writer.nextpart()
-    subpart.addheader("Content-Transfer-Encoding", "quoted-printable")
-    pout = subpart.startbody("text/plain", [("charset", 'utf-8'), ("delsp", 'yes'), ("format", 'flowed')])
-    mimetools.encode(txtin, pout, 'quoted-printable')
-    pout.write (txtin.read())
-    txtin.close()
+    if(text != ""):
+        subpart = writer.nextpart()
+        subpart.addheader("Content-Transfer-Encoding", "quoted-printable")
+        pout = subpart.startbody("text/plain", [("charset", 'utf-8'), ("delsp", 'yes'), ("format", 'flowed')])
+        mimetools.encode(txtin, pout, 'quoted-printable')
+        pout.write (txtin.read())
+        txtin.close()
     
     #
     # start the html subpart of the message
@@ -339,9 +339,6 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                     # end if
                 # end if
                 
-                if ext == "jpg": ext="jpeg"
-                content_type = "image/%s"%(ext)
-
                 if link:
                     # if the url is relative, then add the link url to form an absolute address
                     url_parts = urlparse.urlsplit(x['url'])
@@ -402,8 +399,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                 mylog.debug (explicacion + ' ' + x['url'])
 
                 info = resource.info
-                if 'Content-Type' in info.keys():
-                    content_type = info['Content-Type']
+                content_type = info['Content-Type']
                 # end if
 
                 subpart = htmlpart.nextpart()
@@ -440,7 +436,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
     # end if
     if images:
         htmlpart.lastpart()
-
+    
     #
     # the feed section
     #
@@ -772,7 +768,7 @@ class Item:
         #return self.original.__repr__()
     # end def
 
-    def GetEmail(self, envio, destinatario, plaintext=False):
+    def GetEmail(self, envio, destinatario, format="multipart"):
         global historico_posts
         template = """
 <font face="Arial,Helvetica,Geneva">
@@ -798,7 +794,7 @@ class Item:
         html_version = html_version.replace('__permalink__', self.link)
         html_version = html_version.replace('__htmlUrl__', self.channel.htmlUrl)
 
-        if not plaintext:
+        if format != "plaintext":
             urls = re.findall(re.compile('<.*?img.+?src.*?=.*?[\'"](.*?)[\'"]', re.IGNORECASE), html_version)
             images = None
             if urls:
@@ -872,10 +868,13 @@ class Item:
             historico_feeds[self.channel.xmlUrl]["lastid"] = refid + " " + msgid
         historico_feeds["modified"]=True
  
-        if plaintext:
+        if format == "plaintext":
             return createTextEmail (text_version, headers)
         else:
-            return createhtmlmail (html_version, text_version, headers, images, None, self.link)
+            if( format == "html" ):
+                return createhtmlmail (html_version, '', headers, images, None, self.link)
+            else: # multipart
+                return createhtmlmail (html_version, text_version, headers, images, None, self.link)
         # end if
     # end def
 # end class
@@ -1240,10 +1239,15 @@ class FeedWorker (threading.Thread):
 
                 email_ok = True
                 envio = config.get( 'sender', email_destino[1] )
-                plaintext = (config.get('textonly', '0') == '1') or (feed.get('textonly', '0') == '1')
+                if(config.get('multipart', 'on') == 'off'):
+                     format = "html"
+                else:
+                     format = "multipart"
+                if((config.get('textonly', '0') == '1') or (feed.get('textonly', '0') == '1')):
+                    format = "plaintext"
                 if config.get('send_immediate', '0') == '1':
                     try:
-                        emails = [item.GetEmail(envio, email_destino, plaintext) for item in items]
+                        emails = [item.GetEmail(envio, email_destino, format) for item in items]
                         EnviarEmails (emails, config['smtp_server'])
                     except Exception, e:
                         email_ok = False
@@ -1251,16 +1255,15 @@ class FeedWorker (threading.Thread):
                     # end try
                 else:
                     for item in items:
-                        self.email_queue.put(item.GetEmail(envio, email_destino, plaintext))
+                        self.email_queue.put(item.GetEmail(envio, email_destino, format))
                     # end for
                 # end if
 
                 # second pass for mobile copy, provided we could send the first one
                 if( (feed.get('mobile','0') == '1' ) and movil_destino and email_ok ):
-                   plaintext = True
                    if config.get('send_immediate', '0') == '1':
                       try:
-                          emails = [item.GetEmail(envio, movil_destino, plaintext) for item in items]
+                          emails = [item.GetEmail(envio, movil_destino, "plaintext") for item in items]
                           EnviarEmails (emails, config['smtp_server'])
                       except Exception, e:
                           email_ok = False
@@ -1268,7 +1271,7 @@ class FeedWorker (threading.Thread):
                       # end try
                    else:
                       for item in items:
-                          self.email_queue.put(item.GetEmail(envio, movil_destino, plaintext))
+                          self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext"))
                       # end for
                   # end if
 
