@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.12 2004/08/01 16:23:37 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.13 2004/08/01 22:05:31 rcarmo Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
@@ -79,7 +79,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <ul>
 <li>feed options can be set individually for each feed or for a group of feeds</li>
 <li>supports screen-scraping scripts via an internal <tt>pipe://</tt> URI schema</li>
-<li>the <a href="#opml">OPML</a> file can reside locally (in your hard disk) or remotelly (in a web server).</li>
+<li>the <a href="#opml">OPML</a> file can reside locally (in your hard disk) or remotely (in a web server).</li>
 </ul>
 <li>sends news items via <tt>SMTP</tt> to a designated e-mail address</li>
 <ul>
@@ -87,8 +87,9 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li>multiple items from a feed can be grouped and sent in a digest message</li>
 <li>updated news items are detected and re-sent with <font color="#337700"><b>additions</b></font> and <font color="#FF0000"><STRIKE>deletions</STRIKE></font> highlighted</li>
 <li>images linked from the feed items are downloaded and included as INLINE images in the emails.
+<li>a mobile view of a feed (a text-only copy) can be sent to a secondary e-mail address (to read on a PDA or an MMS-enabled mobile phone)</li>
 </ul>
-<li>full support of HTTP optimizations, like GZip compression, "If-Modified-Since" and "If-None-Match" headers. Feeds and image files will only be downloaded when they have changed.</li>
+<li>full support of HTTP optimizations, like GZip compression, <tt>If-Modified-Since</tt> and <tt>If-None-Match</tt> headers. Feeds and image files will only be downloaded when they have changed.</li>
 </ul>
 
 <a name="requirements"></a>
@@ -154,39 +155,49 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>REQUIRED - fully qualified domain name or IP address of the <tt>SMTP</tt> server to send messages through</td>
   </tr>
   <tr class="odd">
+    <td class="fixed">sender</td>
+    <td><i>None</i></td>
+    <td>optional e-mail address to use as <tt>From:</tt> - overrides the OPML <tt>ownerEmail</tt> field.</td>
+  </tr>
+  <tr>
     <td class="fixed">textonly</td>
     <td>0</td>
     <td>if set to 1, all the messages sent by <tt>newspipe</tt> will be sent in plain text format.</td>
   </tr>
-  <tr>
+  <tr class="odd">
     <td class="fixed">log_console</td>
     <td>0</td>
     <td>If set to 1, this will send logging output to the console <i>and</i> to the log file.</td>
   </tr>
-  <tr class="odd">
+  <tr>
     <td class="fixed">check_online</td>
     <td><i>None</i></td>
     <td>If present, should be the URL of a webpage that the program will try to fetch to determine if there is a network connection available - useful for dialup users that may not be always online.<br>A good value for this is <a href="http://www.google.com">http://www.google.com</a>.</td>
   </tr>
-  <tr>
+  <tr class="odd">
     <td class="fixed">sleep_time</td>
     <td>5</td>
     <td>	Number of minutes to wait before re-checking feeds. If the value is 0, then the program will exit after checking all feeds, instead of waiting to start again (batch mode).</td>
   </tr>
-  <tr class="odd">
+  <tr>
     <td class="fixed">offline</td>
     <td>0</td>
     <td>If set to 1, the program won't try to fetch any data from the internet, using cached versions instead. Useful for debugging.</td>
   </tr>
-  <tr>
+  <tr class="odd">
     <td class="fixed">debug</td>
     <td>0</td>
     <td>If set to 1, logging becomes more verbose. Useful for debugging.</td>
   </tr>
-  <tr class="odd">
+  <tr>
     <td class="fixed">workers</td>
     <td>10</td>
     <td>Number of threads to use simultaneusly. Bigger numbers should mean better performance, but with increased memory and CPU use.<br>Dialup users may want to change this to 3, since more threads may also mean more timeout errors for them.</td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">send_immediate</td>
+    <td>0</td>
+    <td>If set to 1, <tt>newspipe</tt> will send all messages as they are parsed instead of in a single long SMTP transaction at the end of its run. Useful to avoiding choking your SMTP server with a lot of messages at once.</td>
   </tr>
   <tr>
     <td class="fixed">can_pipe</td>
@@ -206,7 +217,42 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <p>Since <a href="#opml">OPML</a> is an hierarchical format, you can have multiple <tt>outline</tt> items nested inside each other. Some <tt>outline</tt> items will denote single feeds, and some will group related sets of feeds together.</p>
 <p><tt>newspipe</tt> allows you to use any sort of layout you like, and lets you set feed options on a group basis or for a single feed:</p>
 
-<p>(place example here)</p>
+<pre>
+&lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;
+&lt;opml version="1.1"&gt;
+  &lt;head&gt;
+    &lt;title&gt;test.opml&lt;/title&gt;
+      &lt;ownerName&gt;Newspipe User&lt;/ownerName&gt;
+      &lt;ownerEmail&gt;newspipe@localhost&lt;/ownerEmail&gt;
+      &lt;ownerMobile&gt;newspipe@mobile.net&lt;/ownerMobile&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;!-- daily digests --&gt;
+    &lt;outline text="Digest" digest="1" delay="1440"&gt;
+      &lt;outline description="Boing Boing"
+         htmlUrl="http://boingboing.net"
+         title="Boing Boing Blog"
+         xmlUrl="http://boingboing.net/rss.xml"
+      /&gt;
+      
+      ...
+    &lt;/outline&gt;
+
+    &lt;!-- normal feeds --&gt;
+    &lt;outline description="One message per item" delay="30"&gt;
+      &lt;!-- single items are _also_ pushed to my mobile --&gt;
+      &lt;outline description="News for nerds, stuff that matters"
+        htmlUrl="http://slashdot.org/"
+        title="Slashdot"
+        xmlUrl="http://slashdot.org/slashdot.rss"
+        mobile="1"
+      /&gt;
+      
+      ...
+    &lt;/outline&gt;
+  &lt;/body&gt;
+&lt;opml&gt;
+</pre>
 
 <table class="flat">
   <tr>
@@ -262,6 +308,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>0</td>
     <td>If set to "1", the emails of this feed will be in plain-text format, instead of HTML.</td>
   </tr>
+  <tr class="odd">
+    <td class="fixed">mobile</td>
+    <td>0</td>
+    <td>If set to "1" and the OPML file has a <tt>ownerMobile</tt> field, a text-only copy of the feed items will be sent to <tt>ownerMobile</tt> (useful for PDAs or MMS-enabled mobile phones)</td>
+  </tr>
 </table>
 
 <a name="mailheaders"></a>
@@ -274,16 +325,16 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <th>Header</th><th>Values & Meaning</th>
   </tr>
   <tr class="odd">
-    <td class="fixed">X-Item-Attributes</td><td><i>add meaning of body, modified_parsed, link, title</i></td>
+    <td class="fixed">X-Item-Attributes</td><td>attributes parsed by <tt>newspipe</tt> while building the message</td>
   </tr>
   <tr>
-    <td class="fixed">X-Item-Text-Key</td><td><i>body</i></td>
+    <td class="fixed">X-Item-Text-Key</td><td>feed attribute that contained the item text </td>
   </tr>
   <tr class="odd">
     <td class="fixed">X-Newspipe-Version</td><td>program version number and revision</td>
   </tr>
   <tr>
-    <td class="fixed">X-Channel-Feed</td><td>feed URL (same as the xmlURL field in the OPML file)</td>
+    <td class="fixed">X-Channel-Feed</td><td>feed URL (same as the <tt>xmlURL</tt> attribute in the OPML file)</td>
   </tr>
   <tr class="odd">
     <td class="fixed">X-Channel-X-Cache-Result</td><td>whether the data was downloaded ("Downloaded")</td>
@@ -300,7 +351,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Acknowledgements</H2>
 <p>
 <ul>
-<li><a href="http://the.taoofmac.com/space/">Rui Carmo</a>, for writing this documentation, for it's Linux and MacOS testing and a lot of suggestions and bug reports.</li>
+<li><a href="http://the.taoofmac.com/space/">Rui Carmo</a>, for writing this documentation, for his Linux and MacOS testing and a lot of suggestions and bug reports.</li>
 <li><a href="http://www.diveintomark.org/">Mark Pilgrim</a>, author of <tt>feedparser.py</tt> (<a href="http://www.feedparser.org/">download feedparser.py</a>)</li> 
 <li><a href="http://www.aaronsw.com/">Aaron Swartz</a>, author of <tt>html2text.py</tt> (<a href="http://www.aaronsw.com/2002/html2text">download html2text.py</a>)</li>
 </ul>
