@@ -1,6 +1,6 @@
 <script language="php">
 // ======================================================================
-// $Id: lib.php,v 1.4 2004/10/24 00:49:30 rcarmo Exp $
+// $Id: lib.php,v 1.5 2004/11/07 13:57:58 rcarmo Exp $
 //
 // WebPipe main library file
 //
@@ -477,7 +477,7 @@ class CProfileManager { // {{{
 // ----------------------------------------------------------------------
 
 function audit( $nLevel, $szMessage, $nType = FAULT_SYSLOG, $szDestination = "", $szHeaders = "" ) {
-  if( $nLevel && LOG_LEVEL ) {
+  if( $nLevel & LOG_LEVEL ) {
     $szMessage = "[" . $_SERVER["REMOTE_ADDR"] . ":" . $_SERVER["REMOTE_PORT"] . "->" . $_SERVER["SERVER_ADDR"] . ":" . $_SERVER["SERVER_PORT"] . "] " . "[" . APPLICATION_NAME . "] $szMessage";
     if( !ANSI_LOGS )
       $szMessage = ereg_replace( "\033\[[0-9]+m", "", $szMessage );
