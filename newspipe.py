@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.52 $"
+__revision__ = "$Revision: 1.53 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.6"
 __date__ = "2005-02-20"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.52 2005/02/21 02:22:54 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.53 2005/03/14 00:36:16 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -94,7 +94,8 @@ CONFIG_DEFAULTS = {
     'encoding': 'utf-8',
     'proxy': '',
     'threading': '0',
-    'subject': ''
+    'subject': '',
+    'priority' : '1'
 }
 
 DEBUG = False
@@ -585,7 +586,7 @@ def quitarEntitys (text):
 
 
 class Channel:
-    def __init__(self, title, original, xmlUrl, htmlUrl, download_link, diff, download_images):
+    def __init__(self, title, original, xmlUrl, htmlUrl, download_link, diff, download_images, parameters):
         self.original = original
         self.xmlUrl = xmlUrl
         self.htmlUrl = htmlUrl
@@ -595,6 +596,7 @@ class Channel:
         self.download_link = download_link
         self.download_images = download_images
         self.diff = diff
+        self.parameters = parameters
 
     def NewItem(self, original, encoding="utf-8"):
         return Item(original, self, encoding)
@@ -867,6 +869,12 @@ class Item:
                 pass
               
         self.is_modified = 'Unknown'
+        
+        self.custom_tags = {}
+        known_tags = ['text', 'link', 'htmlUrl', 'xmlUrl', 'description', 'path', 'title', 'index'] + OPML_DEFAULTS.keys()
+        for k in channel.parameters.keys():
+            if not k in known_tags:
+                self.custom_tags[k] = channel.parameters[k]
 
     def __repr__(self):
         #return 'Link: %s\nTimeStamp: %s\nTexto: %s' % (self.link, self.timestamp, self.texto)
@@ -969,6 +977,9 @@ class Item:
         headers += [('X-Channel-description', makeHeader(self.channel.description)),]
         headers += [('List-Id', '%s <%s>' % ( makeHeader(self.channel.title), self.channel.xmlUrl)),]
         headers += [('Content-Location', self.link),]
+        
+        for k in self.custom_tags.keys():
+            headers += [('X-Custom-'+k, makeHeader(self.custom_tags[k])),]
 
         if DEBUG:
             headers += [('X-Channel-x-cache-result', self.channel.original['Cache-Result']),]
@@ -1200,6 +1211,18 @@ def AgruparItems(lista, titles, encoding):
     if 'modified_parsed' in lista[0].original.keys():
         dicc['modified_parsed'] = lista[0].original['modified_parsed']
     # end if
+    
+    customs = {}
+    for each in lista:
+        for k, v in each.custom_tags.items():
+            if k in customs.keys():
+                if not v in customs[k]:
+                    customs[k] += ' '+ v
+            else:
+                customs[k] = v
+                
+    for k,v in customs.items():
+        dicc[k] = v
 
     return lista[0].channel.NewItem(dicc, encoding)
 # end def
@@ -1395,7 +1418,7 @@ class FeedWorker (_threading.Thread):
 
                 if xml:
                     mylog.debug (xml['channel']['Cache-Result'] + ' ' + url)
-                    channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed['download_link'] == '1', feed['diff'] == '1', feed['download_images'] == '1')
+                    channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed['download_link'] == '1', feed['diff'] == '1', feed['download_images'] == '1', feed)
                     for elemento in xml['items']:
                         item = channel.NewItem(elemento, xml["encoding"])
 
@@ -1518,6 +1541,32 @@ class FeedWorker (_threading.Thread):
 
 log = None
 
+def setPriority (priority):
+    # 0 = Low priority
+    # 1 = Normal priority
+    # 2 = High priority
+    
+    if priority == 1:
+        pass
+    elif priority == 2:
+        raise NotImplementedError('High priority mode not implemented yet')
+    elif priority == 0:
+        if sys.platform.lower().startswith('win'):
+            try: 
+                import ctypes
+                kernel32 = ctypes.windll.kernel32
+                thread = kernel32.GetCurrentThread()
+                kernel32.SetThreadPriority(thread, -15)
+                log.debug ("Thread priority lowered.")
+            except ImportError: 
+                log.error ('CTypes module is not available. The parameter "priority" will be ignored')
+                pass
+        else:
+            raise NotImplementedError ('Priority settings only implemented in Windows')
+    else:
+        raise ValueError ('The parameter "priority" has an invalid value (%d)' % priority)
+    
+
 def MainLoop():
     global historico_posts
     global historico_feeds
@@ -1552,6 +1601,8 @@ def MainLoop():
                 mylog.debug ('%s: %s', x, y)
             # end for
             mylog.debug ('-'*30)
+            
+            setPriority (int(config['priority']))
 
             cache.offline = config['offline'] == '1'
             if cache.offline:
