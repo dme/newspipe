@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.12 $"
+__revision__ = "$Revision: 1.13 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.12 2004/07/31 15:41:38 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.13 2004/07/31 16:05:14 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -1057,7 +1057,7 @@ class FeedWorker (threading.Thread):
                 email_ok = True
                 envio = config.get( 'sender', email_destino[1] )
                 plaintext = (config.get('textonly', '0') == '1') or (feed.get('textonly', '0') == '1')
-                if config.get('send_inmediate', '0') == '1':
+                if config.get('send_immediate', '0') == '1':
                     try:
                         emails = [item.GetEmail(envio, email_destino, plaintext) for item in items]
                         EnviarEmails (emails, config['smtp_server'])
@@ -1074,7 +1074,7 @@ class FeedWorker (threading.Thread):
                 # second pass for mobile copy, provided we could send the first one
                 if( (feed.get('mobile','0') == '1' ) and movil_destino and email_ok ):
                    plaintext = True
-                   if config.get('send_inmediate', '0') == '1':
+                   if config.get('send_immediate', '0') == '1':
                       try:
                           emails = [item.GetEmail(envio, movil_destino, plaintext) for item in items]
                           EnviarEmails (emails, config['smtp_server'])
