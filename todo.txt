@@ -1,0 +1,29 @@
+Things to To
+------------
+$Id: todo.txt,v 1.1 2004/07/24 14:12:27 rcarmo Exp $
+
+Testing
+-------
+
+0001 Validate MIME formatting in Mail.app (done)
+0002 Validate MIME formatting in Thunderbird
+0003 Validate MIME formatting in Outlook Express
+0004 Validate MIME formatting in Outlook 2003/Exchange
+0005 Validate text-only formatting in Blackberry (via Exchange)
+0006 Validate text-only formatting in Series 60 phones (via IMAP)
+0007 Validate text-only formatting in Sony Ericsson phones (via IMAP)
+0008 Validate MIME formatting in IlohaMail (webmail)
+
+
+Features
+--------
+
+1000 Optionally send a text-only copy of some feeds to a second e-mail address
+1001 Create a "mobile" INI entry for 1000
+
+
+Bugs
+----
+
+2000 HTML to text generates multiple copies of same link/image
+2001 Inline images do not display correctly in IlohaMail (webmail)
