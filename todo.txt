@@ -1,12 +1,11 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.16 2004/09/02 11:19:45 rcarmo Exp $
+$Id: todo.txt,v 1.17 2004/09/04 14:40:30 rcarmo Exp $
 
 
 Testing
 -------
 
-0002 Validate MIME formatting in Thunderbird - works save when bug 2003 happens
 0003 Validate MIME formatting in Outlook Express
 0004 Validate MIME formatting in Outlook 2003/Exchange
 0005 Validate text-only formatting in Blackberry (via Exchange)
@@ -23,16 +22,14 @@ Features
 1001 Create a "mobile" INI entry for 1000
 1005 Create a INI entry to set the delay between checks (default 60 minutes) (name of the parameter undetermined yet)
 1006 Tray Icon for windows
-1007 Message-ID header (generated from guid from single item feeds and a
-digest of all guids for digest feeds)
+1007 Message-ID header (generated from guid from single item feeds and a digest of all guids for digest feeds)
 
 Bugs
 ----
 
 2001 Inline images do not display correctly in IlohaMail (webmail)
-2003 MIME types for some images are generated as image/123131232 (random
-number). This seems to happen mostly on digest messages.
 2004 print help text when newspipe.py is called with no OPML or .ini file around
+2005 cache files are always called test.opml.something
 
 Documentation
 -------------
