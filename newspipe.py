@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.45 $"
+__revision__ = "$Revision: 1.46 $"
 __revision_number__ = __revision__.split()[1]
-__version__ = "1.1.1"
-__date__ = "2004-12-05"
+__version__ = "1.1.2"
+__date__ = "2004-12-13"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.45 2004/12/14 01:56:25 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.46 2004/12/14 02:25:40 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -465,9 +465,8 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, 
                 x['url'] = 'ERROR '+x['url'] # arruino la url para que no se reemplace en el html
             # end if
         # end for
-    # end if
-    if images:
         htmlpart.lastpart()
+    # end if
     
     #
     # the feed section
@@ -503,7 +502,7 @@ def quitarEntitys (text):
 
 
 class Channel:
-    def __init__(self, title, original, xmlUrl, htmlUrl, download_link, diff):
+    def __init__(self, title, original, xmlUrl, htmlUrl, download_link, diff, download_images):
         self.original = original
         self.xmlUrl = xmlUrl
         self.htmlUrl = htmlUrl
@@ -511,6 +510,7 @@ class Channel:
         self.description = original.get('description', self.title)
         self.creator = original.get('creator', original.get('author', self.title))
         self.download_link = download_link
+        self.download_images = download_images
         self.diff = diff
 
     def NewItem(self, original, encoding="utf-8"):
@@ -825,10 +825,25 @@ class Item:
         html_version = html_version.replace('__body__', body)
         html_version = html_version.replace('__permalink__', self.link)
         html_version = html_version.replace('__htmlUrl__', self.channel.htmlUrl)
+        
+        img_search_re = re.compile('<.*?img.+?src.*?=.*?[\'"](.*?)[\'"]', re.IGNORECASE)
+        
+        # edit all the image urls that are relative to make them fully qualified
+        if self.link:
+            urls = re.findall(img_search_re, html_version)
+            for url in urls:
+                url_parts = urlparse.urlsplit(url)
+                if not url_parts[1]:
+                    if not url_parts[0].upper() == 'FILE:':
+                        full_url = urlparse.urljoin(link, url)
+                        html_version = html_version.replace (url, full_url)
+                    # end if
+                # end if
+        # end if
 
-        if format != "plaintext":
-            urls = re.findall(re.compile('<.*?img.+?src.*?=.*?[\'"](.*?)[\'"]', re.IGNORECASE), html_version)
-            images = None
+        images = None
+        if format != "plaintext" and self.channel.download_images:
+            urls = re.findall(img_search_re, html_version)
             if urls:
                 images = []
                 seenurls = []
@@ -1241,7 +1256,7 @@ class FeedWorker (_threading.Thread):
 
                 if xml:
                     mylog.debug (xml['channel']['Cache-Result'] + ' ' + url)
-                    channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed['download_link'] == '1', feed['diff'] == '1')
+                    channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed['download_link'] == '1', feed['diff'] == '1', feed['download_images'] == '1')
                     for elemento in xml['items']:
                         item = channel.NewItem(elemento, xml["encoding"])
 
