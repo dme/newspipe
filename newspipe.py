@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.24 $"
+__revision__ = "$Revision: 1.25 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
 __date__ = "2004-09-05"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.24 2004/09/27 00:09:06 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.25 2004/10/09 00:57:43 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -550,6 +550,12 @@ def getPlainText(html, links=True):
     return plain_text
 # end def    
 
+def md5texto(texto):
+    m = md5.new()
+    m.update (texto)
+    return m.hexdigest()
+# end def    
+
 
 class Item:
     def __init__(self, original, channel):
@@ -645,6 +651,8 @@ class Item:
                     self.creatorEmail = m.group(1)
             except TypeError:
                 pass
+              
+        self.is_modified = 'Unknown'
 
     def __repr__(self):
         #return 'Link: %s\nTimeStamp: %s\nTexto: %s' % (self.link, self.timestamp, self.texto)
@@ -719,7 +727,12 @@ class Item:
         headers += [('X-Channel-x-cache-result', self.channel.original['Cache-Result']),]
         headers += [('X-Channel-title', makeHeader(self.channel.title)),]
         headers += [('X-Channel-description', makeHeader(self.channel.description)),]
-
+        headers += [('X-Item-Modified', self.is_modified),]
+        headers += [('X-Item-Hash-Link', md5texto(self.link.encode('latin1', 'replace'))),]
+        headers += [('X-Item-Hash-Feed', md5texto(self.channel.xmlUrl.encode('latin1', 'replace'))),]
+        headers += [('X-Item-Hash-Subject', md5texto(self.subject.encode('latin1', 'replace'))),]
+        headers += [('X-Item-Hash', self.urlHash),]
+       
         if plaintext:
             return createTextEmail (text_version, headers)
         else:
@@ -1032,6 +1045,10 @@ class FeedWorker (threading.Thread):
                             else:
                                 continue
                             # end if
+
+                            item.is_modified = 'True'
+                        else:
+                            item.is_modified = 'False'
                         # end if
 
                         items.append(item)
