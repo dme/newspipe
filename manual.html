@@ -1,8 +1,14 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.2 2004/07/24 23:31:31 rcarmo Exp $">
+<meta name="version" value="$Id: manual.html,v 1.3 2004/07/25 10:15:22 rcarmo Exp $">
 <style>
-BODY, P { font-family: Arial, Helvetica, sans serif; }
+BODY { font-family: Arial, Helvetica, sans serif; }
+H1 { font-size: 18pt; }
+H2 { font-size: 14pt; }
+H3 { font-size: 12pt; }
+P, TH, TD, LI { font-size: 10pt; }
+TT, .fixed { font-family: Courier New, Courier, fixed; }
+.flat { background-color: #d0d0ff; border: 1px solid #8080d0; }
 </style>
 <title>Newspipe</title>
 </head>
@@ -11,11 +17,35 @@ BODY, P { font-family: Arial, Helvetica, sans serif; }
 
 <H2>Introduction</H2>
 
-<p>Brief description and history</p>
+<p><tt>newspipe</tt> is an <a href="#rss">RSS</a>/<a href="#atom">Atom</A> aggregator with a difference: It allows you to keep track of your feeds through e-mail.</p>
+<p>You can read, organize and archive news feeds with your current mail client, without the need for a separate program. <tt>newspipe</tt> collects all your news and sends it to you as plaintext or <tt>HTML</tt> mail, both as single items or grouped in a digest.</p>
+
+<p><tt>newspipe</tt> is the creation of <a href="#ricardo">Ricardo M. Reyes</a>, and started out as an <a href="#rss">RSS</a>-to-<tt>POP3</tt> converter called <tt>rss2mail</tt>. Over time, it grew to the extent where real-time collection via <tt>POP3</tt> wasn't flexible enough, and it was retooled to work via <tt>SMTP</tt>.
+
+<H2>Features</H2>
+
+<ul>
+<li>feeds are listed in an <a href="#opml">OPML</a> file</li>
+<li>messages can be in <tt>HTML</tt>/multipart <tt>MIME</tt> format or plaintext</li>
+<li>multiple items from a feed can be grouped and sent in a digest message</li>
+<li>updated news items are detected and re-sent with <font color="#337700"><b>additions</b></font> and <font color="#FF0000"><STRIKE>deletions</STRIKE></font> highlighted</li>
+</ul>
 
 <H2>Requirements</H2>
+<p>To use <tt>newspipe</tt>, you need:</p>
 
-<p>Newspipe requires Python 2.3 or above (list of platforms tested)</p>
+<ul>
+<li><a href="http://www.python.org">Python</a> 2.3 or above</li>
+<li>access to an <tt>SMTP</tt> server</li>
+<li>a mail client (preferably one capable of displaying <tt>HTML</tt> mail)</li>
+</ul>
+
+<p><tt>newspipe</tt> has so far been successfully tested on:</p>
+<ul>
+<li>Windows (plain and <a href="http://www.cygwin.com">Cygwin</a>)</li>
+<li>Linux</li>
+<li>Mac OS X (10.3.x)</li>
+</ul>
 
 <H2>Installation</H2>
 
@@ -60,7 +90,15 @@ BODY, P { font-family: Arial, Helvetica, sans serif; }
 <H2>Acknowledgements</H2>
 <p>
 <ul>
-<li>feedparser.py by Mark Pilgrim</li>
+<li><tt>feedparser.py</tt> by Mark Pilgrim</li>
+<li><tt>html2text.py</tt> by Aaron Swartz (me@aaronsw.com)</li>
+</ul>
+
+<H2>References</H2>
+
+<ul>
+<li><a name="rss"></a><a href="http://blogs.law.harvard.edu/tech/rss">RSS 2.0 Specification</a></li>
+<li><a name="atom"></a><a href="http://www.atomenabled.org/">Atom Enabled</a></li>
 </ul>
 
 <H2>Changelog</H2>
