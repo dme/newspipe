@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-__revision__ = "$Revision: 1.2 $"
+__revision__ = "$Revision: 1.3 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://sourceforge.net/projects/newspipe/"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.2 2004/07/23 13:49:41 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.3 2004/07/25 00:03:43 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -913,9 +913,6 @@ def CheckOnline(config):
         return True
 
 
-def CalcularDelay (actual, default, actualizado, config):
-    return 60
-
 class FeedWorker (threading.Thread):
     def __init__(self, feeds_queue, email_queue, config, email_destino, semaforo):
         self.config = config
@@ -944,15 +941,13 @@ class FeedWorker (threading.Thread):
             try:
                 items = []
 
-                default_delay = int(feed.get('delay', config.get('delay', '5')))
-
                 semaforo.acquire()
                 if not historico_feeds.has_key(url):
                     historico_feeds[url] = {}
                     historico_feeds[url]['ultimo_check'] = None
                     historico_feeds[url]['proximo_check'] = None
                     historico_feeds[url]['ultima_actualizacion'] = None
-                    historico_feeds[url]['delay'] = default_delay
+                    historico_feeds[url]['delay'] = None
                     historico_feeds['modified'] = True
                 # end if
                 semaforo.release()
@@ -960,13 +955,11 @@ class FeedWorker (threading.Thread):
                 ultimo_check           = historico_feeds[url]['ultimo_check']
                 proximo_check          = historico_feeds[url]['proximo_check']
                 ultima_actualizacion   = historico_feeds[url].get('ultima_actualizacion', None)
-                delay                  = historico_feeds[url].get('delay', default_delay)
+                delay                  = historico_feeds[url].get('delay', None)
 
                 ahora = datetime.now()
-                if config.get('check_delay', '1') == '1':
-                    if proximo_check and ahora < proximo_check:
-                        continue
-                    # end if
+                if proximo_check and ahora < proximo_check:
+                    continue
                 # end if
 
                 title = feed.get('title', feed.get('text', url))
