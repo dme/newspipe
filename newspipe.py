@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.36 $"
+__revision__ = "$Revision: 1.37 $"
 __revision_number__ = __revision__.split()[1]
-__version__ = "1.0.3"
+__version__ = "1.1"
 __date__ = "2004-10-17"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.36 2004/10/18 00:51:12 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.37 2004/10/18 01:51:48 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s

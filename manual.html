@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.18 2004/10/11 00:56:37 rcarmo Exp $">
+<meta name="version" value="$Id: manual.html,v 1.19 2004/10/18 01:51:48 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
@@ -29,7 +29,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <body>
 
 <div class="header">
-	<H1><img src="newspipe.jpg" align=absmiddle>Newspipe</H1>
+	<H1><!-- <img src="newspipe.jpg" align=absmiddle>-->Newspipe</H1>
 </div>
 
 <div class="toc">
@@ -411,7 +411,23 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
-	<li class="release"> v1.0.3 &nbsp; 05-September-2004
+    <li class="release"> v1.1 &nbsp; 17-October-2004
+        <ul class="release_text">
+            <li> Better handling of socket exceptions when downloading images </li>
+            <li> Indicate platform name and python version in the UserAgent header </li>
+            <li> Added Python version and platform information to X-Newspipe-Version header </li>
+            <li> Added basic authentication support, based on <a href="http://jonasgalvez.com/blog/2004-10/gmail-atom-proxy">http://jonasgalvez.com/blog/2004-10/gmail-atom-proxy</a> </li>
+	        <li> Inline images now display correctly in Thunderbird (a single image only, non-digest messages) </li>
+            <li> Fixed Thunderbird rendering of both single and digest feeds </li>
+            <li> Added "multipart" setting to disable plaintext section (should help with webmails) </li>
+            <li> Full encoding support - exaustivly tested with iso-8859-1, -15 and UTF-8 blogs </li>
+            <li> Full Multipart support - works perfectly with Apple Mail, Thunderbird, Outlook Express, IMP (Horde) and Evolution. Now you can click on "choose alternative part" in your email client, and you can save the pictures with the original names </li>
+            <li> Quick and dirty patch to relate posts with each others with Message-ID header - allows you to see each feed in a separate thread </li>
+            <li> Fix for smtp timeouts - now it retries it later </li>
+            <li> Fix for CTRL-C behaviour </li>
+        </ul>
+    </li>
+    <li class="release"> v1.0.3 &nbsp; 05-September-2004
 		<ul class="release_text">
 			<li> Fixed exception when the remote server doesn't include a Date http header.</li>
 			<li> Better handling of file expirations and purging.</li>
@@ -428,7 +444,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 			<li>manual.html updated to reflect the changes in v1.0.1.</li>
 		</ul>
 	</li>
-	<li class="release"> v1.0.1 &nbsp; 01-August-2004 (Changes by Rui and Ricardo)
+	<li class="release"> v1.0.1 &nbsp; 01-August-2004
 		<ul class="release_text">
 			<li> HTML to Text conversion generates only one footnote for each link/image</li>
 			<li> When downloading images, retry up to 3 times on timeouts </li>
