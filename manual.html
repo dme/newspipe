@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.4 2004/07/25 12:17:47 rcarmo Exp $">
+<meta name="version" value="$Id: manual.html,v 1.5 2004/07/25 12:28:02 rcarmo Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
@@ -8,6 +8,7 @@ H1 { font-size: 18pt; padding-top: 18pt; }
 H2 { font-size: 14pt; padding-top: 14pt; }
 H3 { font-size: 12pt; padding-top: 12pt; }
 P, TH, LI { font-size: 10pt; text-align: justify;}
+LI { padding: 2px; }
 TH { border-bottom: 2px solid #6080d0; padding: 6px; }
 TD { font-size: 9pt; vertical-align: top; text-align: left; padding: 4px;}
 TR.odd { background-color: #d8e6ff; }
@@ -30,10 +31,18 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Features</H2>
 
 <ul>
+<li>uses Mark Pilgrim's Universal Feed Parser to support <a href="#rss">RSS</a> and <a href="#atom">Atom</a> feeds</li>
 <li>feeds are listed in an <a href="#opml">OPML</a> file</li>
+<ul>
+<li>feed options can be set individually for each feed or for a group of feeds</li>
+<li>supports screen-scraping scripts via an internal <tt>file://</tt> URI schema</li>
+</ul>
+<li>sends news items via <tt>SMTP</tt> to a designated e-mail address</li>
+<ul>
 <li>messages can be in <tt>HTML</tt>/multipart <tt>MIME</tt> format or plaintext</li>
 <li>multiple items from a feed can be grouped and sent in a digest message</li>
 <li>updated news items are detected and re-sent with <font color="#337700"><b>additions</b></font> and <font color="#FF0000"><STRIKE>deletions</STRIKE></font> highlighted</li>
+</ul>
 </ul>
 
 <H2>Requirements</H2>
