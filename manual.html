@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.27 2005/02/21 02:22:54 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.28 2005/03/21 00:37:41 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -384,6 +384,41 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
   </tr>
 </table>
 
+<p>
+Any attribute that is unknown by Newspipe will be turned into a mail header of the form: <tt>X-Custom-<b>NAME</b>: <b>VALUE</b></tt>, that you can use to filter or classify 
+the emails in your mail client. For example, if you put something like this
+in your opml file:
+</p>
+
+<pre>
+    &lt;outline text="Name of the blog" <font color="red">importance="High"</font> xmlUrl="http://example.com" />
+</pre>
+
+<p>
+All the emails produced for that blog will carry a mail header of the form:
+</p>
+
+<pre>
+    X-Custom-importance: High
+</pre>
+
+<p>
+Also, you can have the same effect with something like this:
+</p>
+
+<pre>
+    &lt;outline text="Important Blogs" <font color="red">importance="High"</font>>
+        &lt;outline text="First one" xmlUrl="http://example.com" ... />
+        &lt;outline text="Second one" xmlUrl="http://example.com" ... />
+        &lt;outline text="Third one" xmlUrl="http://example.com" ... />
+    &lt;/outline>
+</pre>
+
+<p>
+In this later case, the three items "inherite" the parent's attribute, and all of them will have the same extra mail header. This is a useful way to group feeds together when 
+you want to filter or process them in some way with your mail client.
+</p>
+
 <a name="mailheaders"></a>
 <H2>Mail Headers</H2>
 
@@ -494,6 +529,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
+    <li class="release"> v1.1.7 &nbsp; 20-March-2005
+        <ul class="release_text">
+            <li> Now all the unknown attributes in the OPML file will be turned into X-Custom-... headers in the emails, for sorting and filtering purposes. </li>
+        </ul>
+    </li>
     <li class="release"> v1.1.6 &nbsp; 20-February-2005
         <ul class="release_text">
             <li> New opml parameter <tt>check_time</tt> that controls the time range when the feed will be checked (for example, "7am - 22:00") </li>
