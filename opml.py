@@ -2,13 +2,16 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.3 $"
+__revision__ = "$Revision: 1.4 $"
 __revision_number__ = __revision__.split()[1]
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__id__ = "$Id: opml.py,v 1.3 2004/12/08 20:25:33 reyesric Exp $"
+__id__ = "$Id: opml.py,v 1.4 2004/12/08 22:50:54 reyesric Exp $"
 
 from pprint import pprint
+import xml.dom.minidom
+from htmlentitydefs import  *
+from datetime import datetime
 
 def getText(nodelist):
     rc = ""
@@ -55,7 +58,6 @@ def CrearDiccionario(raiz):
 # end def    
 
 def ParseOPML(archivo):
-    import xml.dom.minidom
 
     result = {}
 
@@ -105,7 +107,7 @@ def ListToDict(lista):
     result = {}
 
     for attr, value in lista:
-        result[attr] = value
+        result[attr] = value.strip()
     # end for
 
     return result
@@ -135,7 +137,55 @@ def AplanarArbol(arbol, defaults=None):
                     each[key] = value
 
     return result
-# end def    
+# end def  
+
+entidades = {}
+for key,value in entitydefs.items():
+    entidades[unicode(value, 'latin1')] = unicode(key)
+# end for
+
+def escape (text):
+    aux = []
+    for each in text:
+        if each in entidades.keys():
+            aux.append ('&'+entidades[each]+';')
+        else:
+            aux.append (each)
+    return ''.join(aux)
+
+def generarOPML (feedList):
+    doc = xml.dom.minidom.Document()
+    
+    opml = doc.createElement ('opml')
+    opml.setAttribute ('version', '1.1')
+    doc.appendChild(opml)
+    
+    head = doc.createElement ('head')
+    opml.appendChild(head)
+    
+    for each, value in feedList['head'].items():
+        if value.strip():
+            if each != 'dateModified':
+                attr = doc.createElement (each)
+                ptext = doc.createTextNode (value)
+                attr.appendChild (ptext)
+                head.appendChild (attr)
+
+    attr = doc.createElement ('dateModified')
+    ptext = doc.createTextNode (str(datetime.now()))
+    attr.appendChild (ptext)
+    head.appendChild (attr)
+    
+
+    body = doc.createElement('body')
+    opml.appendChild(body)
+    for each in feedList['body']:
+        outline = doc.createElement ('outline')
+        for key, value in each.items():
+            outline.setAttribute (key, value)
+        body.appendChild (outline)
+
+    return doc.toprettyxml(encoding='utf-8')
 
 if __name__ == '__main__':
-    pprint (AplanarArbol(ParseOPML('prueba.opml'), {'key1':'val1', 'key2':'val2'}))
+    pprint (AplanarArbol(ParseOPML('test.opml')))
