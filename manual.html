@@ -1,10 +1,10 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.6 2004/07/25 15:49:26 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.7 2004/07/26 15:01:34 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
-H1 { font-size: 18pt; padding-top: 18pt; }
+H1 { font-size: 23pt; padding-top: 18pt; }
 H2 { font-size: 14pt; padding-top: 14pt; }
 H3 { font-size: 12pt; padding-top: 12pt; }
 P, TH, LI { font-size: 10pt; text-align: justify;}
@@ -15,12 +15,39 @@ TR.odd { background-color: #d8e6ff; }
 TT, .fixed { font-family: Courier New, Courier, fixed; }
 .fixed { font-weight: bold; }
 .flat { text-align: center; background-color: #d0e0ff; border: 0px solid #8080d0; border-spacing: 0px; }
+
+.header { clear: both; }
+.toc {float: right; background-color: #d8e6ff; padding: 20px; margin: 10pt;}
+.toc h2 { padding-top: 0pt;}
+.toc ul { list-style: none; margin-left: 0;}
+.main {float: left; }
 </style>
 <title>Newspipe</title>
 </head>
 <body>
-<H1>Newspipe</H1>
 
+<div class="header">
+	<H1>Newspipe</H1>
+</div>
+
+<div class="toc">
+<h2>Table of Content</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#features">Features</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#downloads">Downloads</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#configuration">Configuration</a></li>
+<li><a href="#mailheaders">Mail Headers</a></li>
+<li><a href="#acknowledgements">Acknowledgements</a></li>
+<li><a href="#contact">Contact</a></li>
+<li><a href="#references">References</a></li>
+<li><a href="#changelog">Changelog</a></li>
+</ul>
+
+<div class="main">
+<a name="introduction"></a>
 <H2>Introduction</H2>
 
 <p><tt>newspipe</tt> is an <a href="#rss">RSS</a>/<a href="#atom">Atom</A> aggregator with a difference: It allows you to keep track of your feeds through e-mail.</p>
@@ -28,6 +55,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 
 <p><tt>newspipe</tt> is the creation of <a href="#ricardo">Ricardo M. Reyes</a>, and started out as an <a href="#rss">RSS</a>-to-<tt>POP3</tt> converter called <tt>rss2pop3</tt>. Over time, it grew to the extent where real-time collection via <tt>POP3</tt> wasn't flexible enough, and it was retooled to work via <tt>SMTP</tt>.
 
+<a name="features"></a>
 <H2>Features</H2>
 
 <ul>
@@ -48,6 +76,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li>full support of HTTP optimizations, like GZip compression, "If-Modified-Since" and "If-None-Match" headers. Feeds and image files will only be downloaded when they have changed.</li>
 </ul>
 
+<a name="requirements"></a>
 <H2>Requirements</H2>
 <p>To use <tt>newspipe</tt>, you need:</p>
 
@@ -66,15 +95,18 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li>Mac OS X (10.3.x)</li>
 </ul>
 
+<a name="downloads"></a>
 <H2>Download</H2>
 
 <p>You can download the latest stable version from <a href="http://sourceforge.net/project/showfiles.php?group_id=114820&package_id=124374">here</a>.</p>
 
 <p>If you would like to try the latest version and you have a CVS client, you are welcome to download it from the CVS repository (module newspipe at cvs.sourceforge.net:/cvsroot/newspipe). You can also browse the latest source code <a href="http://cvs.sourceforge.net/viewcvs.py/newspipe/newspipe/">here</a>.</p>
 
+<a name="installation"></a>
 <H2>Installation</H2>
 
 
+<a name="configuration"></a>
 <H2>Configuration</H2>
 
 <p>There are two main sets of configuration options program-wide options set via a .INI file, and per-feed options set inside the <a href="#opml">OPML</a> file.</p> 
@@ -189,23 +221,24 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>1</td>
     <td>If set to "1", <tt>newspipe</tt> will compare the text of each item with the previous version (if any) stored in the cache, and will highlight any <font color="#337700"><b>additions</b></font> and <font color="#FF0000"><STRIKE>deletions</STRIKE></font> in the text. You can disable this feature seting this parameter to "0" if it gets too distracting.</td>
   </tr>
-  <tr class="odd">
+  <tr>
     <td class="fixed">check_text</td>
     <td>1</td>
     <td>When this parameter is set to "0", Newspipe will not re-send items previously seen, even if the text of the item has changed. When set to "1", old items that have any change in their text will be treated as new items, and will be sent by email.</td>
   </tr>
-  <tr>
+  <tr class="odd">
     <td class="fixed">delay</td>
     <td>60</td>
     <td>Number of minutes to wait between checks to this feed.</td>
   </tr>
-  <tr class="odd">
+  <tr>
     <td class="fixed">textonly</td>
     <td>0</td>
     <td>If set to "1", the emails of this feed will be in plain-text format, instead of HTML.</td>
   </tr>
 </table>
 
+<a name="mailheaders"></a>
 <H2>Mail Headers</H2>
 
 <p><tt>newspipe</tt> adds a number of mail headers to messages that you can use to filter or classify them into folders, and which also provide some useful information as to what it has done to parse the feed:</p>
@@ -229,14 +262,15 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
   <tr class="odd">
     <td class="fixed">X-Channel-X-Cache-Result</td><td>whether the data was downloaded ("Downloaded")</td>
   </tr>
-  <tr class="odd">
+  <tr>
     <td class="fixed">X-Channel-Title</td><td>the feed title</td>
   </tr>
-  <tr>
+  <tr class="odd">
     <td class="fixed">X-Channel-Description</td><td>the feed description</td>
   </tr>
 </table>
 
+<a name="acknowledgements"></a>
 <H2>Acknowledgements</H2>
 <p>
 <ul>
@@ -245,10 +279,12 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li><a href="http://www.aaronsw.com/">Aaron Swartz</a>, author of <tt>html2text.py</tt> (<a href="http://www.aaronsw.com/2002/html2text">download html2text.py</a>)</li>
 </ul>
 
+<a name="contact"></a>
 <H2>Contact the Author</H2>
 <p>You can contact the author of <tt>newspipe</tt> trough email at <a href="mailto:reyesric@ufasta.edu.ar">reyesric@ufasta.edu.ar</a></p>
 <p>Any suggestion, bug reports, or comments are most welcome.</p>
 
+<a name="references"></a>
 <H2>References</H2>
 
 <ul>
@@ -257,7 +293,9 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li><a name="opml"></a><a href="http://www.opml.org/spec">OPML Specification</a>
 </ul>
 
+<a name="changelog"></a>
 <H2>Changelog</H2>
+</div>
 
 
 </body>
