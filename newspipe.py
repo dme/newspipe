@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.43 $"
+__revision__ = "$Revision: 1.44 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.1"
 __date__ = "2004-12-05"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.43 2004/12/08 20:25:32 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.44 2004/12/08 20:38:23 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -66,6 +66,7 @@ PYTHON_VERSION = '.'.join([str(x) for x in sys.version_info])
 USER_AGENT = 'NewsPipe/'+__version__+' rev.'+__revision_number__+' Python: '+ PYTHON_VERSION+' Platform: '+sys.platform +' / '+__url__
 
 OPML_DEFAULTS = {
+    'active': '1',
     'digest': '0',
     'titles': '1',
     'download_link': '0',
@@ -1412,7 +1413,10 @@ def MainLoop():
 
                     log.debug ('Inserting the feeds into the pending queue')
                     for feed in opml['body']:
-                        feeds_queue.put(feed)
+                        if feed['active'] == '1':
+                            feeds_queue.put(feed)
+                        else:
+                            log.debug ('Ignoring the INactive feed: '+feed['xmlUrl'])
                     # end for
 
                     log.debug ('Inserting the end-of-work markers in the queue')
