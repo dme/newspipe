@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-__revision__ = "$Revision: 1.5 $"
+
+# $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
+__revision__ = "$Revision: 1.6 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
-__url__ = "https://sourceforge.net/projects/newspipe/"
+__url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.5 2004/07/25 20:38:22 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.6 2004/07/26 16:55:11 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
 """%(__version__, __revision_number__, __date__.split('-')[0], __author__) 
-
-# $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
 
 #import psyco
 #psyco.full()

@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-__revision__ = "$Revision: 1.1 $"
+
+# $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
+__revision__ = "$Revision: 1.2 $"
 __revision_number__ = __revision__.split()[1]
+__url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
+__id__ = "$Id: opml.py,v 1.2 2004/07/26 16:55:11 reyesric Exp $"
 
 from pprint import pprint
 
