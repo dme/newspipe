@@ -1,9 +1,10 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.15 2004/09/06 00:18:24 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.16 2004/10/10 14:19:07 rcarmo Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
+
 H1 { font-size: 23pt; padding-top: 18pt; }
 H2 { font-size: 14pt; padding-top: 14pt; }
 H3 { font-size: 12pt; padding-top: 12pt; }
@@ -17,12 +18,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 .flat { text-align: center; background-color: #d0e0ff; border: 0px solid #8080d0; border-spacing: 0px; }
 .release { font-weight: bold; color: #990000; list-style: none; padding-top: 12pt;}
 .release_text { font-weight: normal; color: black; }
-
-.header { clear: both; }
-.toc {float: right; background-color: #d8e6ff; padding: 20px; margin: 10pt;}
-.toc h2 { padding-top: 0pt;}
-.toc ul { list-style: none; margin-left: 0;}
-.main {float: left; }
+.toc {float: right; background-color: #d8e6ff; padding: 10px; margin-left: 10pt;}
+.toc h2 { padding-top: 0pt;font-size: 12pt;}
+.toc ul {list-style: none; margin-left: 0;}
+.toc, .toc p {text-align: center;}
+.toc li {font-size: 9pt; }
 </style>
 <title>Newspipe</title>
 </head>
@@ -33,7 +33,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 </div>
 
 <div class="toc">
-<h2>Table of Content</h2>
+<h2>Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#features">Features</a></li>
@@ -48,34 +48,32 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li><a href="#changelog">Changelog</a></li>
 </ul>
 <br>
-
 <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=114820&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
-
 <br>
-
 <p> 
 <a href="http://sourceforge.net/export/rss2_projfiles.php?group_id=114820"><IMG src="http://images.sourceforge.net/images/xml.png" border="0" alt="RSS Feed Available" width="36" height="14"></a> (new releases)
 </p>
-
 <p><a href="http://sourceforge.net/projects/newspipe">Newspipe's Home<br>at Sourceforge.net</a></p>
-
-</div
+</div>
 
 <div class="main">
+
+
 <a name="introduction"></a>
 <H2>Introduction</H2>
 
-<p><tt>newspipe</tt> is an <a href="#rss">RSS</a>/<a href="#atom">Atom</A> aggregator with a difference: It allows you to keep track of your feeds through e-mail.</p>
-<p>You can read, organize and archive news feeds with your current mail client, without the need for a separate program. <tt>newspipe</tt> collects all your news and sends it to you as plaintext or <tt>HTML</tt> mail, both as single items or grouped in a digest.</p>
+<p><tt>newspipe</tt> is an <a href="#rss">RSS</a>/<a href="#atom">Atom</A> aggregator with a difference: It allows you to keep track of your feeds through e-mail - you create an <a href="#opml">OPML</a> file listing your feeds and <tt>newspipe</tt> will collect them, convert them to e-mail messages and send them to your mailbox.</p>
+<p>This means you can read, organize and archive news feeds using your current mail client (or even webmail), without needing to use a separate program. <tt>newspipe</tt> can send you news items as plaintext or <tt>HTML</tt> mail, both as single items or grouped in a digest.</p>
 
 <p><tt>newspipe</tt> is the creation of <a href="#contact">Ricardo M. Reyes</a>, and started out as an <a href="#rss">RSS</a>-to-<tt>POP3</tt> converter called <tt>rss2pop3</tt>. Over time, it grew to the extent where real-time collection via <tt>POP3</tt> wasn't flexible enough, and it was retooled to work via <tt>SMTP</tt>.
 
+<br clear="all">
 <a name="features"></a>
 <H2>Features</H2>
 
 <ul>
-<li>uses <a href="http://www.diveintomark.org/">Mark Pilgrim's</a> <a href="http://www.feedparser.org/">Universal Feed Parser</a> to support <a href="#rss">RSS</a> and <a href="#atom">Atom</a> feeds</li>
-<li>feeds are listed in an <a href="#opml">OPML</a> file</li>
+<li>Supports <a href="#rss">RSS</a> and <a href="#atom">Atom</a> feeds through <a href="http://www.diveintomark.org/">Mark Pilgrim's</a> <a href="http://www.feedparser.org/">Universal Feed Parser</a></li>
+<li>feeds are listed in an <a href="#opml">OPML</a> file:</li>
 <ul>
 <li>feed options can be set individually for each feed or for a group of feeds</li>
 <li>supports screen-scraping scripts via an internal <tt>pipe://</tt> URI schema</li>
@@ -86,10 +84,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li>messages can be in <tt>HTML</tt>/multipart <tt>MIME</tt> format or plaintext</li>
 <li>multiple items from a feed can be grouped and sent in a digest message</li>
 <li>updated news items are detected and re-sent with <font color="#337700"><b>additions</b></font> and <font color="#FF0000"><STRIKE>deletions</STRIKE></font> highlighted</li>
-<li>images linked from the feed items are downloaded and included as INLINE images in the emails.
-<li>a mobile view of a feed (a text-only copy) can be sent to a secondary e-mail address (to read on a PDA or an MMS-enabled mobile phone)</li>
+<li>images linked from the feed items are downloaded and included as inline images inside the mail message (great for archiving purposes).
+<li>a mobile (text-only) view of a feed can be sent to a secondary e-mail address (to read on a PDA or an MMS-enabled mobile phone)</li>
 </ul>
-<li>full support of HTTP optimizations, like GZip compression, <tt>If-Modified-Since</tt> and <tt>If-None-Match</tt> headers. Feeds and image files will only be downloaded when they have changed.</li>
+<li>full support for HTTP optimizations like <tt>gzip</tt> compression, <tt>If-Modified-Since</tt> and <tt>If-None-Match</tt> headers. Feeds and image files will only be downloaded when they have changed.</li>
+<li>E-mail "threading" based on previously sent <a href="#rss">RSS</a> items.</li>
 </ul>
 
 <a name="requirements"></a>
@@ -102,21 +101,21 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li>a mail client (preferably one capable of displaying <tt>HTML</tt> mail)</li>
 </ul>
 
-<p>All the required libraries are included in the distributions .zip file.</p>
+<p>All the required <a href="http://www.python.org">Python</a> modules and libraries are included in the distribution archive.</p>
 
 <p><tt>newspipe</tt> has so far been successfully tested on:</p>
 <ul>
 <li>Windows (plain and <a href="http://www.cygwin.com">Cygwin</a>)</li>
-<li>Linux</li>
+<li>Linux (several distros)</li>
 <li>Mac OS X (10.3.x)</li>
 </ul>
 
 <a name="downloads"></a>
 <H2>Download</H2>
 
-<p>You can download the latest stable version from <a href="http://sourceforge.net/project/showfiles.php?group_id=114820&package_id=124374">here</a>.</p>
+<p>You can download the latest stable version from <a href="http://sourceforge.net/project/showfiles.php?group_id=114820&package_id=124374">the files section</a>.</p>
 
-<p>If you would like to try the latest version and you have a CVS client, you are welcome to download it from the CVS repository (module newspipe at cvs.sourceforge.net:/cvsroot/newspipe). You can also browse the latest source code <a href="http://cvs.sourceforge.net/viewcvs.py/newspipe/newspipe/">here</a>.</p>
+<p>If you would like to try the latest version and you have a CVS client, you are welcome to download it from the CVS repository (module <tt>newspipe</tt> at <tt>cvs.sourceforge.net:/cvsroot/newspipe</tt>). You can also <a href="http://cvs.sourceforge.net/viewcvs.py/newspipe/newspipe/">browse</a> the latest source code through the SourceForge <tt>viewcvs</tt> interface.</p>
 
 <a name="installation"></a>
 <H2>Installation</H2>
@@ -234,7 +233,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
          title="Boing Boing Blog"
          xmlUrl="http://boingboing.net/rss.xml"
       /&gt;
-      
+      &lt;outline description="Private Feed"
+         htmlUrl="http://development.local"
+         auth="username:password"
+         xmlUrl="http://development.local/rss.xml"
+      /&gt;
       ...
     &lt;/outline&gt;
 
@@ -313,6 +316,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>0</td>
     <td>If set to "1" and the OPML file has a <tt>ownerMobile</tt> field, a text-only copy of the feed items will be sent to <tt>ownerMobile</tt> (useful for PDAs or MMS-enabled mobile phones)</td>
   </tr>
+  <tr>
+    <td class="fixed">auth</td>
+    <td><i>None</i></td>
+    <td>Contains an optional <tt>username:password</tt> string for basic HTTP authentication (known to work with <a href="http://www.gmail.com">Gmail</a> <a href="#Atom">Atom</a> feeds.)</td>
+  </tr>
 </table>
 
 <a name="mailheaders"></a>
@@ -337,13 +345,34 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td class="fixed">X-Channel-Feed</td><td>feed URL (same as the <tt>xmlURL</tt> attribute in the OPML file)</td>
   </tr>
   <tr class="odd">
-    <td class="fixed">X-Channel-X-Cache-Result</td><td>whether the data was downloaded ("Downloaded")</td>
+    <td class="fixed">X-Channel-X-Cache-Result</td><td>whether the data was downloaded ("Downloaded") or obtained from a <tt>pipe://</tt> feed ("From process")</td>
   </tr>
   <tr>
     <td class="fixed">X-Channel-Title</td><td>the feed title</td>
   </tr>
   <tr class="odd">
     <td class="fixed">X-Channel-Description</td><td>the feed description</td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Item-Modified</td><td>Whether <tt>newspipe</tt> detected changes to the feed item (set to "Unknown" for digest feeds)</td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">X-Item-Hash-Link</td><td><tt>md5</tt>-encoded item link</td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Item-Hash-Feed</td><td><tt>md5</tt>-encoded feed URL (<tt>xmlUrl</tt>)</td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">X-Item-Hash-Subject</td><td><tt>md5</tt>-encoded <tt>Subject</tt></td>
+  </tr>
+  <tr>
+    <td class="fixed">X-Item-Hash</td><td><tt>md5</tt>-encoded item URL</td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">In-Reply-To</td><td>Last <tt>Message-ID</tt> generated from this feed (to simulate e-mail threading)</td>
+  </tr>
+  <tr>
+    <td class="fixed">References</td><td>List of <tt>Message-ID<tt>s generated from this feed (to simulate e-mail threading)</td>
   </tr>
 </table>
 
@@ -352,6 +381,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <p>
 <ul>
 <li><a href="http://the.taoofmac.com/space/">Rui Carmo</a>, for writing this documentation, for his Linux and MacOS testing and a lot of suggestions and bug reports.</li>
+<li><a href="http://www.litux.org">Bruno David Rodrigues</a>, for a number of <tt>MIME</tt> and <tt>UTF-8</tt> fixes, e-mail threading headers and memory usage debugging.</li>
 <li><a href="http://www.diveintomark.org/">Mark Pilgrim</a>, author of <tt>feedparser.py</tt> (<a href="http://www.feedparser.org/">download feedparser.py</a>)</li> 
 <li><a href="http://www.aaronsw.com/">Aaron Swartz</a>, author of <tt>html2text.py</tt> (<a href="http://www.aaronsw.com/2002/html2text">download html2text.py</a>)</li>
 </ul>
@@ -415,7 +445,5 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 </ul>
 
 </div>
-
-
 </body>
 </html>
