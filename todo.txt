@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.4 2004/07/24 19:45:53 rcarmo Exp $
+$Id: todo.txt,v 1.5 2004/07/24 21:13:42 reyesric Exp $
 
 
 Testing
@@ -22,7 +22,7 @@ Features
 1000 Optionally send a text-only copy of some feeds to a second e-mail address
 1001 Create a "mobile" INI entry for 1000
 1002 Create a "sender" INI entry to force the sender to be different from the user's e-mail address (makes filtering easier)
-1005 (next)
+1005 Create a INI entry to set the delay between checks (default 60 minutes) (name of the parameter undetermined yet)
 
 Bugs
 ----
@@ -39,3 +39,7 @@ Documentation
 3001 Add newspipe.ini.sample and newspipe.opml.sample
 3002 OPML attributes reference (digest, text only, etc., etc...)
 3003 HTML manual (maybe generated from above)
+
+Improvements (ideas for the future)
+-----------------------------------
+4000 Change the "historic" files' format from pickle to something more memory-efficient. Should try SHELVE or DBM. ZODB might be overkill.
