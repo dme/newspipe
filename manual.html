@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.14 2004/08/02 16:52:04 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.15 2004/09/06 00:18:24 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 a { text-decoration: none; }
@@ -374,6 +374,18 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
+	<li class="release"> v1.0.3 &nbsp; 05-September-2004
+		<ul class="release_text">
+			<li> Fixed exception when the remote server doesn't include a Date http header.</li>
+			<li> Better handling of file expirations and purging.</li>
+			<li> html2text.py: New version 2.21</li>
+			<li> Fixed overlapping items in digest feeds (added br clear=all tag). <b>(by Rui)</b></li>
+			<li> Fixed image/121212121 MIME types (such as those from the Engadget feed) by using the Content-Type provided by the cache object (which in turn is the one provided by the web server we got the images from).<b>(by Rui)</b></li>
+			<li> Fixed the exception "TypeError: string indices must be integers" when sending text-only messages.</li>
+			<li> Better handling of exceptions when purging the cache, due to misterious exceptions on the pickle module.</li>
+			<li> When an item has multiple instances of a single image (like TaoofMac's) download only one file and use it as many times as needed.</li>
+		</ul>
+	</li>
 	<li class="release"> v1.0.1b &nbsp; 02-August-2004 
 		<ul class="release_text">
 			<li>manual.html updated to reflect the changes in v1.0.1.</li>
