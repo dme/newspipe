@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-__revision__ = "$Revision: 1.1 $"
+__revision__ = "$Revision: 1.2 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://sourceforge.net/projects/newspipe/"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.1 2004/07/22 17:53:59 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.2 2004/07/23 13:49:41 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -242,15 +242,49 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                     # end if
                 # end if
             
-                try:
-                    resource = cache.urlopen(x['url'], max_age=999999, referer=link, can_pipe=False)
-                except HTTPError, e:
-                    # in case of HTTP error 403 ("Forbiden") retry without the Referer
-                    if e.code == 403:
-                        resource = cache.urlopen(x['url'], max_age=999999, referer=None, can_pipe=False)
+                retries = 0;
+                MAX_RETRIES = 3;
+                img_referer = link
+                resource = None
+                while retries < MAX_RETRIES:
+                    retries += 1
+
+                    # try to fetch the image.
+                    # in case of Timeout or URLError exceptions, retry up to 3 times
+                    try:
+                        resource = cache.urlopen(x['url'], max_age=999999, referer=img_referer, can_pipe=False)
+                    except HTTPError, e:
+                        # in case of HTTP error 403 ("Forbiden") retry without the Referer
+                        if e.code == 403 and img_referer:
+                            log.info ('HTTP error 403 downloading %s, retrying withou the referer' % (x['url'],))
+                            img_referer = None
+                        else:
+                            raise
+                        # end if
+                    except socket.timeout:
+                        log.info ('Timeout error downloading %s' % (x['url'],))
+                        if retries == MAX_RETRIES:
+                            raise
+                        # end if
+                    except URLError, e:
+                        log.info ('URLError (%s) downloading %s' % (e.reason, x['url'],))
+                        if retries == MAX_RETRIES:
+                            raise
+                        # end if
+                    except Exception:
+                        raise # any other exception, kick it up, to be handled later
                     else:
-                        raise
-                    # end if
+                        # if there's no exception, break the loop to continue 
+                        # processing the image
+                        break
+                    # end try
+                            
+                    log.info ('Retrying, %d time' % retries);
+                # end while
+
+                if not resource:
+                    raise Exception('Unknown problem')
+                # end if
 
                 explicacion = resource.info['Cache-Result']
 
