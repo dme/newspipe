@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.19 $"
+__revision__ = "$Revision: 1.20 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.2"
 __date__ = "2004-08-01"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.19 2004/09/04 00:29:04 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.20 2004/09/04 12:43:26 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -763,7 +763,7 @@ def EnviarEmails(msgs, server):
                 log.debug('mail sent to %s from %s ' % (toaddr, fromaddr))
             # end for
             smtp.quit()
-            log.info ('%d emails sent succesfully' % (len(msgs),))
+            log.info ('%d emails sent successfully' % (len(msgs),))
         finally:
             semaforo_email.release()
     # end if
@@ -866,10 +866,10 @@ def CargarHistoricos(name):
     try:
         file_name = os.path.join(data_dir, name+'.feeds')
         historico_feeds = load(open(file_name))
-        log.debug('Cargando el archivo '+name+'.feeds')
+        log.debug('Loading feed archive '+name+'.feeds')
     except:
         try:
-            log.debug('No existe. Cargando el archivo '+name+'.feeds.bak')
+            log.debug('Archive not found. Trying backup file '+name+'.feeds.bak')
             file_name = os.path.join(data_dir, name+'.feeds.bak')
             historico_feeds = load(open(file_name))
         except:
@@ -884,11 +884,11 @@ def CargarHistoricos(name):
 
     try:
         file_name = os.path.join(data_dir, name+'.posts')
-        log.debug('Cargando el archivo '+name+'.posts')
+        log.debug('Loading post archive '+name+'.posts')
         historico_posts = load(open(file_name))
     except:
         try:
-            log.debug('No existe. Cargando el archivo '+name+'.posts.bak')
+            log.debug('Archive not found. Trying backup file '+name+'.posts.bak')
             file_name = os.path.join(data_dir, name+'.posts.bak')
             historico_posts = load(open(file_name))
         except:
@@ -904,7 +904,7 @@ def CargarHistoricos(name):
 def GrabarHistorico(dicc, name, extension):
     data_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/data'))
     
-    log.debug('Grabando el archivo '+name+extension)
+    log.debug('Saving archive '+name+extension)
     dump(dicc, open(os.path.join(data_dir, name + extension +'.new'), 'w'))
 
     try: os.remove (os.path.join(data_dir, name+extension+'.bak'))
@@ -998,7 +998,7 @@ class FeedWorker (threading.Thread):
                 # end if
 
                 title = feed.get('title', feed.get('text', url))
-                log.debug ('Procesando '+title)
+                log.debug ('Processing '+title)
                 xml = None
                 try:
                     xml = cache.feed_parse(url, can_pipe=config.get('can_pipe', '0') == '1')
@@ -1139,7 +1139,7 @@ def MainLoop():
         log.debug ('Home directory: '+GetHomeDir())
 
         try:
-            log.debug ('Parametros de configuración')
+            log.debug ('Configuration settings:')
             log.debug ('-'*30)
             for x,y in config.items():
                 log.debug ('%s: %s', x, y)
@@ -1161,7 +1161,7 @@ def MainLoop():
                 opml = None
                 try:
                     opml = AplanarArbol(ParseOPML(cache.urlopen(archivo, max_age=60, can_pipe=False).content))
-                    log.debug ('Procesing file: '+archivo)
+                    log.debug ('Processing file: '+archivo)
                 except:
                     log.exception ('Error parsing file: '+archivo)
                     opml = None
@@ -1220,7 +1220,7 @@ def MainLoop():
                         log.exception ('Error enviando los emails: %s' % (str(e),))
                     # end try
 
-                    log.debug (archivo + ' terminado')
+                    log.debug (archivo + ' finished.')
 
                     # borrar las entradas del historico que son demasiado viejas
                     historico_feeds, historico_posts = CargarHistoricos(opml['head']['title'])
