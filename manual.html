@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.24 2005/01/29 22:42:01 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.25 2005/02/06 03:04:54 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -461,6 +461,15 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
+    <li class="release"> v1.1.5 &nbsp; 05-February-2005 
+        <ul class="release_text">
+            <li> Added <tt>List-Id</tt> and <tt>Content-Location</tt> headers, as suggested in <a href="https://sourceforge.net/tracker/index.php?func=detail&aid=1109286&group_id=114820&atid=669525"> this feature request</a> </li>
+            <li> The <tt>References</tt> and <tt>In-Reply-To</tt> will only be present when the new "threading" parameter is set to 1 in the .ini file. It's been reported that they annoy some users :) </li>
+            <li> Removed some debugging headers. They will only be included in the mails when the program is run in DEBUG mode. </li>
+            <li> Try to use the feed author email as From address, when possible </li>
+            <li> Fixed typo in parameters: immediate </li>
+        </ul>
+    </li>
     <li class="release"> v1.1.4 &nbsp; 26-December-2004
         <ul class="release_text">
             <li> Support for proxy servers, controlled with the new .ini file parameter: <tt>proxy</tt> <b>(Thanks to David Malkovsky for this)</b></li>
