@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.37 $"
+__revision__ = "$Revision: 1.38 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1"
 __date__ = "2004-10-17"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.37 2004/10/18 01:51:48 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.38 2004/11/14 22:39:25 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -249,7 +249,7 @@ class TextDiff:
         aux = self.diffText
         return aux
 
-def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
+def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, encoding='utf-8'):
     """Create a mime-message that will render HTML in popular
     MUAs, text in better ones"""
 
@@ -456,13 +456,13 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
     writer.lastpart()
     msg_source = out.getvalue()
     out.close()
-    return message_from_string (msg_source)
+    return message_from_string (msg_source.encode(encoding, 'replace'))
 
-def createTextEmail(text, headers):
+def createTextEmail(text, headers, encoding='utf-8'):
     t = '\r\n'.join([x+': '+y for x,y in headers])
     t += '\r\n\r\n'
     t += text
-    return message_from_string(t.encode('utf-8', 'replace'))
+    return message_from_string(t.encode(encoding, 'replace'))
 # end def    
 
 
@@ -768,7 +768,7 @@ class Item:
         #return self.original.__repr__()
     # end def
 
-    def GetEmail(self, envio, destinatario, format="multipart"):
+    def GetEmail(self, envio, destinatario, format="multipart", encoding='utf-8'):
         global historico_posts
         template = """
 <font face="Arial,Helvetica,Geneva">
@@ -869,12 +869,12 @@ class Item:
         historico_feeds["modified"]=True
  
         if format == "plaintext":
-            return createTextEmail (text_version, headers)
+            return createTextEmail (text_version, headers, encoding)
         else:
             if( format == "html" ):
-                return createhtmlmail (html_version, '', headers, images, None, self.link)
+                return createhtmlmail (html_version, '', headers, images, None, self.link, encoding)
             else: # multipart
-                return createhtmlmail (html_version, text_version, headers, images, None, self.link)
+                return createhtmlmail (html_version, text_version, headers, images, None, self.link, encoding)
         # end if
     # end def
 # end class
@@ -1010,7 +1010,7 @@ def AgruparItems(lista, titles):
         dicc['modified_parsed'] = lista[0].original['modified_parsed']
     # end if
 
-    return lista[0].channel.NewItem(dicc)
+    return lista[0].channel.NewItem(dicc, encoding)
 # end def
 
 
@@ -1234,7 +1234,7 @@ class FeedWorker (threading.Thread):
 
                 if (len(items) >= 1) and (feed.get('digest', '0') == '1'):
                     lista_vieja = items[:]
-                    items = [AgruparItems(lista_vieja, feed.get('titles', '1') == '1'),]
+                    items = [AgruparItems(lista_vieja, feed.get('titles', '1') == '1', config.get('encoding', 'utf-8')),]
                 # end if
 
                 email_ok = True
@@ -1245,9 +1245,12 @@ class FeedWorker (threading.Thread):
                      format = "multipart"
                 if((config.get('textonly', '0') == '1') or (feed.get('textonly', '0') == '1')):
                     format = "plaintext"
+                    
+                encoding = config.get('encoding', 'utf-8')
+                    
                 if config.get('send_immediate', '0') == '1':
                     try:
-                        emails = [item.GetEmail(envio, email_destino, format) for item in items]
+                        emails = [item.GetEmail(envio, email_destino, format, encoding) for item in items]
                         EnviarEmails (emails, config['smtp_server'])
                     except Exception, e:
                         email_ok = False
@@ -1255,7 +1258,7 @@ class FeedWorker (threading.Thread):
                     # end try
                 else:
                     for item in items:
-                        self.email_queue.put(item.GetEmail(envio, email_destino, format))
+                        self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding))
                     # end for
                 # end if
 
@@ -1263,7 +1266,7 @@ class FeedWorker (threading.Thread):
                 if( (feed.get('mobile','0') == '1' ) and movil_destino and email_ok ):
                    if config.get('send_immediate', '0') == '1':
                       try:
-                          emails = [item.GetEmail(envio, movil_destino, "plaintext") for item in items]
+                          emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding) for item in items]
                           EnviarEmails (emails, config['smtp_server'])
                       except Exception, e:
                           email_ok = False
@@ -1271,7 +1274,7 @@ class FeedWorker (threading.Thread):
                       # end try
                    else:
                       for item in items:
-                          self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext"))
+                          self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding))
                       # end for
                   # end if
 
