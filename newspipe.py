@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.22 $"
+__revision__ = "$Revision: 1.23 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
 __date__ = "2004-09-05"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.22 2004/09/06 00:08:41 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.23 2004/09/14 02:02:04 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -255,12 +255,12 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                     except HTTPError, e:
                         # in case of HTTP error 403 ("Forbiden") retry without the Referer
                         if e.code == 403 and img_referer:
-                            log.info ('HTTP error 403 downloading %s, retrying withou the referer' % (x['url'],))
+                            log.info ('HTTP error 403 downloading %s, retrying without the referer' % (x['url'],))
                             img_referer = None
                         else:
                             raise
                         # end if
-                    except socket.timeout:
+                    except (socket.timeout, socket.error):
                         log.info ('Timeout error downloading %s' % (x['url'],))
                         if retries == MAX_RETRIES:
                             raise
