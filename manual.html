@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.26 2005/02/13 04:20:08 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.27 2005/02/21 02:22:54 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -214,7 +214,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
   <tr class="odd">
     <td class="fixed">can_pipe</td>
     <td>0</td>
-    <td><p>Enables <tt>pipe://</tt> URI support. When set to "1", the program will accept feed URLs that start with <tt>pipe://</tt> - an arbitrary protocol name used to tell <tt>newswire</tt> that to get the feed data, it should run the program or command after the <tt>pipe://</tt> and use its standard output as feed data.</p>
+    <td><p>Enables <tt>pipe://</tt> URI support. When set to "1", the program will accept feed URLs that start with <tt>pipe://</tt> - an arbitrary protocol name used to tell <tt>Newspipe</tt> that to get the feed data, it should run the program or command after the <tt>pipe://</tt> and use its standard output as feed data.</p>
     <p>Example:</p>
     <tt>&lt;outline ... xmlURL="pipe://python.exe scrape_site.py" /&gt;</tt>
     <p>tells <tt>Newspipe</tt> to run</p>
@@ -237,6 +237,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>0</td>
     <td><p> If set to "1", <tt>Newspipe</tt> will add the <tt>References</tt> and <tt>In-Reply-To</tt> headers to emails, to allow threading of the messages </p></td>
   </tr>
+  <tr class="odd">
+    <td class="fixed">subject</td>
+    <td>None</td>
+    <td><p> The value of this parameter will be added at the begining of the subject of every email, so that they can be identified and filtered by mail programs that can't access the mail headers </p></td>
+  </tr>
 </table>
  
 <H3>OPML Options</H3>
@@ -253,6 +258,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">title</span>></tt>test.opml<tt>&lt;/title></tt><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">ownerName</span>></tt>Your name goes here<tt>&lt;/ownerName></tt><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">ownerEmail</span>></tt>your.name@example.com<tt>&lt;/ownerEmail></tt><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">ownerMobile</span>></tt>your.phone@example.com<tt>&lt;/ownerEmail></tt><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;/<span class="tag">head</span>></tt><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">body</span>></tt><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tt>&lt;<span class="tag">outline</span> <span class="attr">text</span>=<span class="text">"General"</span>></tt><br/>
@@ -366,6 +372,16 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>1</td>
     <td>If set to "0", Newspipe won't download any images, and the emails will link to them externally.</td>
   </tr>
+  <tr>
+    <td class="fixed">check_time</td>
+    <td><i>None</i></td>
+    <td>The value of this parameter should be a time range in the form <tt>"10:00 to 21:00"</tt>. If present, <tt>Newspipe</tt> will only download and check this feed when the current time is inside the indicated time range.</td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">mobile_time</td>
+    <td>None</td>
+    <td>The value of this parameter should be a time range in the form <tt>"10:00 to 21:00"</tt>, and only has effect when the <tt>mobile</tt> option is set to "1". If present, <tt>Newspipe</tt> will send the text email to the secondary address only when the current time is inside the indicated time range. For example, you can set this option to <tt>"8:00 - 21:00"</tt> to avoid receiving alerts in your phone during the night</td>
+  </tr>
 </table>
 
 <a name="mailheaders"></a>
@@ -478,9 +494,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
-    <li class="release"> asdf
+    <li class="release"> v1.1.6 &nbsp; 20-February-2005
         <ul class="release_text">
-            <li> New .ini parameter <tt>subject</tt>, can be used to add a string to the subject of every email </li>
+            <li> New opml parameter <tt>check_time</tt> that controls the time range when the feed will be checked (for example, "7am - 22:00") </li>
+            <li> New opml parameter <tt>mobile_time</tt> that controls the time range when <tt>Newspipe</tt> will send the mobile versions of emails (for example, "16:30 - 10:30pm") </li>
+            <li> New .ini parameter <tt>subject</tt>, can be used to prepend a string to the subject of every email </li>
         </ul>
     </li>
     <li class="release"> v1.1.5 &nbsp; 05-February-2005 

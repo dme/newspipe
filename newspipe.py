@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.51 $"
+__revision__ = "$Revision: 1.52 $"
 __revision_number__ = __revision__.split()[1]
-__version__ = "1.1.5"
-__date__ = "2005-02-05"
+__version__ = "1.1.6"
+__date__ = "2005-02-20"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.51 2005/02/13 04:20:08 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.52 2005/02/21 02:22:54 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -76,7 +76,9 @@ OPML_DEFAULTS = {
     'delay': '60',
     'textonly': '0',
     'mobile': '0',
-    'download_images': '1'
+    'download_images': '1',
+    'check_time': '',
+    'mobile_time': ''
 }
 
 CONFIG_DEFAULTS = {
@@ -182,6 +184,80 @@ def LogFile(stderr=True, name='default', location='.', debug=False):
 
     return logger
 # end def    
+
+def parseTime (text):
+    AM = 1
+    PM = 2
+    UNKNOWN = 3
+    
+    text = text.lower()
+    
+    if 'am' in text:
+        ampm = AM
+        text = text.replace('am', '')
+    elif 'pm' in text:
+        ampm = PM
+        text = text.replace('pm', '')
+    else:
+        ampm = UNKNOWN
+        
+    text = text.strip()
+    partes = text.split(':')
+    if len(partes) == 1:
+        partes.append('0')
+        
+    try:
+        hours = int(partes[0])
+        minutes = int(partes[1])
+    except ValueError:
+        return None
+
+    if ampm == PM:
+        hours = hours + 12
+    
+    return (hours, minutes)
+    
+    return None
+
+def parseTimeRange (text):
+    begin, end = None, None
+    
+    text = text.strip()
+    
+    separadores = [x for x in (' , ; to = / | -').split(' ') if x]
+    separadores.append(' ')
+    
+    partes = None
+    for each in separadores:
+        aux = text.split(each)
+        if len(aux) == 2:
+            partes = aux
+    
+    if partes:
+        partes = [x.strip() for x in partes]
+        begin = parseTime(partes[0])
+        end = parseTime(partes[1])
+        if begin and end:
+            return (begin, end)
+    
+    return None
+    
+def checkTime (range):
+    n = datetime.now()
+    hours = n.hour
+    minutes = n.minute
+    
+    begin = range[0][0]*100 + range[0][1]
+    end =   range[1][0]*100 + range[1][1]
+    current = hours*100 + minutes
+    
+    if end < begin:
+        end += 2400
+    
+    result = begin <= current <= end
+    
+    return result
+
 
 def intEnt(m):
     m = int(m.groups(1)[0])
@@ -875,12 +951,14 @@ class Item:
         # end if
         
         if subject_prefix:
-            self.subject = subject_prefix + ': ' + self.subject
+            subject = subject_prefix + ': ' + self.subject
+        else:
+            subject = self.subject
 
         headers = []
         headers += [('From', '"%s" <%s>' % (makeHeader(self.channel.title), envio)),]
         headers += [('To', '"%s" <%s>' % (destinatario[0], destinatario[1],)),]
-        headers += [('Subject', makeHeader(self.subject)),]
+        headers += [('Subject', makeHeader(subject)),]
         msgid = email.Utils.make_msgid()
         headers += [('Message-ID', msgid),]
         headers += [('Date', self.timestamp.strftime("%a, %d %b %Y %H:%M:%S +0000")),]
@@ -1242,17 +1320,25 @@ class FeedWorker (_threading.Thread):
         movil_destino = self.movil_destino
         semaforo = self.semaforo
 
-        count = 100
-        while count:
+        while True:
             gc.collect()
-            count = count - 1
             feed = self.feeds_queue.get()
             if feed is None:
                 break
             # end if
-
+            
             url = feed['xmlUrl']
             try:
+                time = feed.get('check_time', None)
+                if time:
+                    parsed_time = parseTimeRange(time)
+                    if parsed_time:
+                        if not checkTime (parsed_time):
+                            mylog.debug ('Ignoring the feed '+url)
+                            continue
+                    else:
+                        mylog.error ('Error parsing the time range "%s" in the feed %s' % (time, url))
+
                 items = []
 
                 semaforo.acquire()
@@ -1378,19 +1464,33 @@ class FeedWorker (_threading.Thread):
 
                 # second pass for mobile copy, provided we could send the first one
                 if( (feed['mobile'] == '1' ) and movil_destino and email_ok ):
-                   if config['send_immediate'] == '1':
-                      try:
-                          emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix) for item in items]
-                          EnviarEmails (emails, config['smtp_server'])
-                      except Exception, e:
-                          email_ok = False
-                          mylog.exception ('Error enviando los emails: %s' % (str(e),))
-                      # end try
-                   else:
-                      for item in items:
-                          self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix))
-                      # end for
-                  # end if
+                    send = False
+                    
+                    time = feed.get('mobile_time', None)
+                    if time:
+                        parsed_time = parseTimeRange(time)
+                        if parsed_time:
+                            if checkTime (parsed_time):
+                                send = True
+                        else:
+                            mylog.error ('Error parsing the time range "%s" in the feed %s' % (time, url))
+                    
+                    if send:
+                        if config['send_immediate'] == '1':
+                            try:
+                                emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix) for item in items]
+                                EnviarEmails (emails, config['smtp_server'])
+                            except Exception, e:
+                                email_ok = False
+                                mylog.exception ('Error enviando los emails: %s' % (str(e),))
+                            # end try
+                        else:
+                            for item in items:
+                                self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix))
+                            # end for
+                        # end if
+                    # end if
+                # end if
 
                 if email_ok:
                     for item in items_sin_agrupar:
