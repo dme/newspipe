@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.20 $"
+__revision__ = "$Revision: 1.21 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.2"
 __date__ = "2004-08-01"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.20 2004/09/04 12:43:26 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.21 2004/09/04 14:32:57 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -230,9 +230,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                         # end if
                     # end if
                 # end if
-
-                content_type = "image/%s"%(ext)
-
+                
                 if link:
                     # if the url is relative, then add the link url to form an absolute address
                     url_parts = urlparse.urlsplit(x['url'])
@@ -292,9 +290,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                 log.debug (explicacion + ' ' + x['url'])
 
                 info = resource.info
-                if 'Content-Type' in info.keys():
-                    content_type = info['Content-Type']
-                # end if
+                content_type = info['Content-Type']
 
                 subpart = writer.nextpart()
                 subpart.addheader("Content-Transfer-Encoding", "base64")
@@ -810,6 +806,7 @@ def AgruparItems(lista, titles):
         __body__
     </p>
 </FONT>
+<br clear=all>
 <hr>
 """
 
