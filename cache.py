@@ -2,11 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.3 $"
+__revision__ = "$Revision: 1.4 $"
 __revision_number__ = __revision__.split()[1]
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__id__ = "$Id: cache.py,v 1.3 2004/08/31 02:05:56 reyesric Exp $"
+__id__ = "$Id: cache.py,v 1.4 2004/09/02 02:21:56 reyesric Exp $"
 
 from glob import glob
 from pickle import load, dump
@@ -129,6 +129,19 @@ class Cache:
         data_name = os.path.join(self.location, filename + '.data')
 
         info = self.info(url)
+
+        if info:
+            if 'expires' in info.keys():
+                t = email.Utils.parsedate(info['Expires'])
+                if t:
+                    timestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
+
+                    if timestamp < datetime.utcnow():
+                        info = None
+                    # end if
+                # end if
+            # end if
+        # end if
 
         if info:
             try:        
@@ -326,32 +339,6 @@ class Cache:
                     # end if
                 # end if
             # end if
-
-            if not eliminado:
-                try:
-                    info = load(open(x, 'rb'))
-
-                    if 'expires' in info.keys():
-                        t = email.Utils.parsedate(info['Expires'])
-                        if t:
-                            timestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
-
-                            if timestamp < datetime.utcnow():
-                                base = os.path.splitext(os.path.split(x)[1])[0]
-                                for ext in ['info', 'data']:
-                                    try:
-                                        os.remove (os.path.join(self.location, base + '.' + ext))
-                                    except OSError:
-                                        pass
-                                    # end try
-                                # end for
-                            # end if
-                        # end if
-                    # end if
-                except EOFError, e:
-                    print 'EOFError al leer ', x
-                    pass
-            # end if
         # end for     
     # end def    
 
@@ -433,6 +420,5 @@ class Cache:
 # end class
 
 if __name__ == '__main__':
-    c = Cache('./cache', debug=True, offline=False)
-    d = c.urlopen('http://m1.nedstatbasic.net/n?id=ACW0%20Cg3n3JI/PXYAdsBvJgHNc0YA', max_age=999999, can_pipe=False)
-    pprint (d.info.items())
+    c = Cache(r'C:\Documents and Settings\Administrador\Datos de programa\.newspipe\cache', debug=True, offline=False)
+    c.purge(10)
