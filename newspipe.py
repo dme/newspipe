@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.33 $"
+__revision__ = "$Revision: 1.34 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
 __date__ = "2004-10-08"
-__url__ = "https://newspipe.sourceforge.net"
+__url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.33 2004/10/11 22:03:41 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.34 2004/10/11 23:55:50 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -838,7 +838,7 @@ class Item:
 
         headers += [('X-Item-Attributes', ', '.join(self.original.keys())),]
         headers += [('X-Item-Text-Key', self.text_key),]
-        headers += [('X-NewsPipe-Version', '%s (Rev %s)' % (__version__, __revision_number__)),]
+        headers += [('X-NewsPipe-Version', '%s (Rev %s, Python %s, %s) %s' % (__version__, __revision_number__, PYTHON_VERSION, sys.platform, __url__)),]
         headers += [('X-Channel-Feed', self.channel.xmlUrl),]
         headers += [('X-Channel-x-cache-result', self.channel.original['Cache-Result']),]
         headers += [('X-Channel-title', makeHeader(self.channel.title)),]
