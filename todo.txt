@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.6 2004/07/24 23:08:50 rcarmo Exp $
+$Id: todo.txt,v 1.7 2004/07/25 12:31:31 rcarmo Exp $
 
 
 Testing
@@ -36,8 +36,7 @@ Documentation
 -------------
 
 3000 Add README, INSTALL, LICENSE, etc. (the usual GPL stuff, maybe based on the.taoofmac.com's short notes)
-3001 Add newspipe.ini.sample and newspipe.opml.sample
-3002 OPML attributes reference (digest, text only, etc., etc...)
+3001 Update newspipe.ini.sample and add newspipe.opml.sample
 3003 HTML manual (maybe generated from above)
 
 Improvements (ideas for the future)
