@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.11 $"
+__revision__ = "$Revision: 1.12 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.11 2004/07/31 03:15:17 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.12 2004/07/31 15:41:38 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -303,24 +303,29 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                 f = subpart.startbody(content_type, [["name", x['name']]])
                 b64 = base64.encodestring(resource.content.read())
                 f.write(b64)
+
+                image_ok = True  # the image was downloaded ok
             except KeyboardInterrupt:
                 raise
             except socket.timeout:
                 log.info ('Timeout error downloading %s' % (x['url'],))
-                x['url'] = 'ERROR '+x['url'] # arruino la url para que no se reemplace en el html
+                image_ok = False
             except HTTPError, e:
                 log.info ('HTTP Error %d downloading %s' % (e.code, x['url'],))
-                x['url'] = 'ERROR '+x['url'] # arruino la url para que no se reemplace en el html
+                image_ok = False
             except URLError, e:
                 log.info ('URLError (%s) downloading %s' % (e.reason, x['url'],))
-                x['url'] = 'ERROR '+x['url'] # arruino la url para que no se reemplace en el html
+                image_ok = False
             except OfflineError:
                 log.info ('Resource unavailable when offline (%s)' % x['url'])
-                x['url'] = 'ERROR '+x['url'] # arruino la url para que no se reemplace en el html
+                image_ok = False
             except Exception, e:
                 log.exception ('Error %s downloading %s' % (str(e), x['url'],))
-                x['url'] = 'ERROR '+x['url'] # arruino la url para que no se reemplace en el html
+                image_ok = False
             # end try
+            if not image_ok:
+                x['url'] = 'ERROR '+x['url'] # arruino la url para que no se reemplace en el html
+            # end if
         # end for
     # end if
 
@@ -756,7 +761,7 @@ def EnviarEmails(msgs, server):
 
                 # build envelope and send message
                 smtp.sendmail(fromaddr, toaddr, msg)
-                log.info('mail sent to %s from %s ' % (toaddr, fromaddr))
+                log.debug('mail sent to %s from %s ' % (toaddr, fromaddr))
             # end for
             smtp.quit()
             log.info ('%d emails sent succesfully' % (len(msgs),))
@@ -1052,7 +1057,7 @@ class FeedWorker (threading.Thread):
                 email_ok = True
                 envio = config.get( 'sender', email_destino[1] )
                 plaintext = (config.get('textonly', '0') == '1') or (feed.get('textonly', '0') == '1')
-                if config.get('send_immediate', '0') == '1':
+                if config.get('send_inmediate', '0') == '1':
                     try:
                         emails = [item.GetEmail(envio, email_destino, plaintext) for item in items]
                         EnviarEmails (emails, config['smtp_server'])
@@ -1069,7 +1074,7 @@ class FeedWorker (threading.Thread):
                 # second pass for mobile copy, provided we could send the first one
                 if( (feed.get('mobile','0') == '1' ) and movil_destino and email_ok ):
                    plaintext = True
-                   if config.get('send_immediate', '0') == '1':
+                   if config.get('send_inmediate', '0') == '1':
                       try:
                           emails = [item.GetEmail(envio, movil_destino, plaintext) for item in items]
                           EnviarEmails (emails, config['smtp_server'])
