@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.56 $"
+__revision__ = "$Revision: 1.57 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.7"
 __date__ = "2005-03-20"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.56 2005/04/04 03:35:36 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.57 2005/04/04 03:56:40 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -603,8 +603,8 @@ class Channel:
         self.diff = diff
         self.parameters = parameters
 
-    def NewItem(self, original, encoding="utf-8"):
-        return Item(original, self, encoding)
+    def NewItem(self, original, encoding="utf-8", remove=None):
+        return Item(original, self, encoding, remove)
     # end def
 # end class
 
@@ -761,7 +761,7 @@ def md5texto(texto):
 
 
 class Item:
-    def __init__(self, original, channel, encoding="utf-8"):
+    def __init__(self, original, channel, encoding="utf-8", remove=None):
         global historico_posts
 
         if encoding == '': encoding="utf-8"
@@ -809,6 +809,10 @@ class Item:
                 self.texto_nuevo = downloaded_file.content.read()
             # end if
         # end if
+        
+        if remove:
+            rc = re.compile (remove, re.I+re.S+re.X)
+            self.texto_nuevo = re.sub(rc, '', self.texto_nuevo)
 
         if type(self.texto_nuevo) == type(""):
             try:
@@ -1033,11 +1037,6 @@ class Item:
             else: # multipart
                 return createhtmlmail (html_version, text_version, headers, images, None, self.link, encoding)
         # end if
-    # end def
-    
-    def removeRX (self, regexp):
-        rc = re.compile (regexp, re.I+re.S+re.X)
-        self.texto = re.sub(rc, '', self.texto)
     # end def
 # end class
 
@@ -1448,11 +1447,8 @@ class FeedWorker (_threading.Thread):
                     mylog.debug (xml['channel']['Cache-Result'] + ' ' + url)
                     channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed['download_link'] == '1', feed['diff'] == '1', feed['download_images'] == '1', feed)
                     for elemento in xml['items']:
-                        item = channel.NewItem(elemento, xml["encoding"])
+                        item = channel.NewItem(elemento, xml["encoding"], feed['remove'])
                         
-                        if feed.has_key('remove'):
-                            item.removeRX (feed['remove'])
-
                         if historico_posts.has_key(item.urlHash):
                             historico_posts[item.urlHash]['timestamp'] = datetime.now()
                             historico_posts['modified'] = True
