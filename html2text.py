@@ -9,7 +9,6 @@ __copyright__ = "(C) 2004 Aaron Swartz. GNU GPL 2."
 #	Fix :s using buffering
 #	Relative URl resolution
 
-from pprint import pprint
 import re, sys, urllib, htmlentitydefs, codecs, StringIO
 import sgmllib
 sgmllib.charref = re.compile('&#([xX]?[0-9a-fA-F]+)[^0-9a-fA-F]')
