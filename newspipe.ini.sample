@@ -1,0 +1,12 @@
+; Sample configuration file
+; $Id: newspipe.ini.sample,v 1.1 2004/07/24 19:52:43 rcarmo Exp $
+
+[NewsPipe]
+; Console log
+log_console=1
+; SMTP server
+smtp_server=127.0.0.1
+; OPML file
+opml=newspipe.opml
+; Minutes between runs - set to zero for batch mode
+sleep_time=5
