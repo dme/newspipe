@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.17 $"
+__revision__ = "$Revision: 1.18 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.2"
 __date__ = "2004-08-01"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.17 2004/08/19 21:50:27 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.18 2004/08/26 02:55:57 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -1240,7 +1240,11 @@ def MainLoop():
             # end if CheckOnline
 
             # erase from the cache anything older than 10 days - to be made configurable?
-            cache.purge(10)
+            try:
+                cache.purge(10)
+            except:
+                log.exception ('Unhandled exception when purging the cache')
+            # end try
 
             if int(config.get('sleep_time', '0')) == 0:
                 break
