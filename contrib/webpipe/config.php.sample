@@ -1,8 +1,60 @@
 <script language="php">
-// $Id: config.php.sample,v 1.1 2004/10/10 00:11:27 rcarmo Exp $
+// ======================================================================
+// $Id: config.php.sample,v 1.2 2004/10/24 00:49:30 rcarmo Exp $
+//
+// WebPipe sample configuration file - edit and rename this to config.php
+//
+// Copyright (C) 2004 Rui Carmo, http://the.taoofmac.com
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or 
+// (at your option) any later version.
+//    
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//    
+//  You should have received a copy of the GNU General Public License
+//  along with this program; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+//
+// ======================================================================
+
 define( 'MAILBOX',           "{mailserver.local/imap/notls:143}INBOX" );
 define( 'MAIL_USERNAME',     "username" );
 define( 'MAIL_PASSWORD',     "password" );
 define( 'MAIL_TRASH_FOLDER', "Trash" );
-define( 'SITE_ROOT',         "/~username/webpipe");
+define( 'SITE_ROOT',         "/~username/webpipe"); // location of these files
+define( 'APPLICATION_NAME',  "WebPipe" );
+define( 'RESIZE_IMAGES',     true ); // adapt content to WAP/PDA browsers
+
+// E_DEBUG | E_PARSE | E_NOTICE are disabled for production systems
+define( 'DEVICE_PROFILE_DB', "devices.dat" );
+
+// Usernames and passwords. Passwords can be created by using PHP's md5sum()
+// or by typing echo -n "password" | md5sum at a UNIX command prompt
+$gaUsers = array( "editor" => "5aee9dbd2a188839105073571bee1b1f",   // editor/editor
+                  "viewer" => "4b2a1529867b8d697685b1722ccd0149" ); // viewer/viewer
+
+$gaACL = array( 
+  // "privileges list", list of server variables and regular expressions 
+  
+  // Authenticated viewers from anywhere
+  array( "view", "PHP_AUTH_USER" => "/^viewer/" ),
+  
+  // Authenticated editors from anywhere
+  array( "view,edit,delete", "PHP_AUTH_USER" => "/^editor/" ),
+  
+  // Non-Authenticated editors from our subnet (not true subnet masking, but works)
+  array( "view,edit,delete", "REMOTE_ADDR" => "/^192.168.0./" ),
+  
+  // Non-Authenticated viewer from a specific address
+  array( "view", "REMOTE_ADDR" => "/^10.0.0.1/" ),
+  
+  // Non-authenticated WAP viewing and flagging from a specific address
+  array( "view,edit", "REMOTE_ADDR" => "/^10.0.0.2/", 
+                      "HTTP_USER_AGENT" => "/BogusPhone/" )
+);
 </script>

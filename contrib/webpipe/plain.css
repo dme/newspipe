@@ -1,4 +1,7 @@
-body,td,div,p,li { font-family: Lucida Sans, Arial, Helvetica, Sans-Serif; font-size: 10pt; }
+body,td,div,p,li { font-family: Lucida Sans, Arial, Helvetica, Sans-Serif; font-size: 9pt; }
 img { border: none; }
 blockquote { border-left: 1px solid #c0c0ff; background: #e0e8ff; padding: 4px; margin: 0px 0px 20px 0px; }
 a { text-decoration: none; }
+.even { background-color: #e0f0f0; }
+.odd { background-color: white; }
+table { background-color: #d0e0e0; }
