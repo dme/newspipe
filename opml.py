@@ -2,11 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.4 $"
+__revision__ = "$Revision: 1.5 $"
 __revision_number__ = __revision__.split()[1]
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__id__ = "$Id: opml.py,v 1.4 2004/12/08 22:50:54 reyesric Exp $"
+__id__ = "$Id: opml.py,v 1.5 2004/12/14 02:22:07 reyesric Exp $"
 
 from pprint import pprint
 import xml.dom.minidom
@@ -36,7 +36,12 @@ def CrearDiccionario(raiz):
     if outline:
         result[u'childs'] = {}
         for hijo in [x for x in raiz.childNodes if x.nodeName == 'outline']:
-            nombre = hijo.attributes.get('title', hijo.attributes.get('text')).value
+            attribute = hijo.attributes.get('title', hijo.attributes.get('text', None))
+            if attribute:
+                nombre = attribute.value
+            else:
+                nombre = ''
+                
             if nombre in result[u'childs'].keys():
                 i = 1
                 original = nombre
