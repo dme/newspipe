@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.20 2004/10/21 23:18:01 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.21 2004/12/06 00:26:32 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -213,6 +213,10 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <p>and capture its standard output as feed data. This allows you to use screen-scraping scripts to generate feed data from sites that have no <a href="#rss">RSS</a> feeds, and since it makes <tt>newspipe</tt> invoke external programs, it is disabled by default as a security measure.
     </td>
   </tr>   
+  <tr>
+    <td class="fixed">encoding</td>
+    <td>utf-8</td>
+    <td><p> Determines the unicode encoding to use when composing the emails (you can find the list of possible values at <a href="http://www.python.org/dev/doc/devel/lib/standard-encodings.html">this page</a>) </p></td>
 </table>
  
 <H3>OPML Options</H3>
@@ -410,6 +414,12 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
+    <li class="release"> v1.1.1 &nbsp; 05-December-2004
+        <ul class="release_text">
+            <li> Added an option to set the text encoding of the emails, trough the .ini parameter "encoding" (default: utf-8) </li>
+            <li> Added support for use of the module dummy_threading, for those installations where the "real" threading module is not available </li>
+        </ul>
+    </li>
     <li class="release"> v1.1 &nbsp; 17-October-2004
         <ul class="release_text">
             <li> Better handling of socket exceptions when downloading images </li>
