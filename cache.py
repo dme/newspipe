@@ -2,11 +2,11 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.2 $"
+__revision__ = "$Revision: 1.3 $"
 __revision_number__ = __revision__.split()[1]
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__id__ = "$Id: cache.py,v 1.2 2004/07/26 16:55:11 reyesric Exp $"
+__id__ = "$Id: cache.py,v 1.3 2004/08/31 02:05:56 reyesric Exp $"
 
 from glob import glob
 from pickle import load, dump
@@ -271,6 +271,12 @@ class Cache:
             else:
                 info['Local-File'] = data_name
             # end if
+
+            if not ('date' in [x.lower() for x in info.keys()]):
+                st = os.stat(data_name)
+                last_mod = st[8]
+                info['Date'] = time.ctime(last_mod)
+            # end if
         except IOError:
             info = None
         # end try
@@ -428,5 +434,5 @@ class Cache:
 
 if __name__ == '__main__':
     c = Cache('./cache', debug=True, offline=False)
-    d = c.feed_parse('pipe://e:/python23/python c:/desarrollo/scrap/multicanal.py', can_pipe=True)
-    print d
+    d = c.urlopen('http://m1.nedstatbasic.net/n?id=ACW0%20Cg3n3JI/PXYAdsBvJgHNc0YA', max_age=999999, can_pipe=False)
+    pprint (d.info.items())
