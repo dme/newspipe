@@ -1,11 +1,10 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.1 2004/07/24 14:12:27 rcarmo Exp $
+$Id: todo.txt,v 1.2 2004/07/24 14:32:17 rcarmo Exp $
 
 Testing
 -------
 
-0001 Validate MIME formatting in Mail.app (done)
 0002 Validate MIME formatting in Thunderbird
 0003 Validate MIME formatting in Outlook Express
 0004 Validate MIME formatting in Outlook 2003/Exchange
@@ -20,6 +19,7 @@ Features
 
 1000 Optionally send a text-only copy of some feeds to a second e-mail address
 1001 Create a "mobile" INI entry for 1000
+1002 Create a "sender" INI entry to force the sender to be different from the user's e-mail address (makes filtering easier)
 
 
 Bugs
