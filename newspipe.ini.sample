@@ -1,5 +1,5 @@
 ; Sample configuration file
-; $Id: newspipe.ini.sample,v 1.1 2004/07/24 19:52:43 rcarmo Exp $
+; $Id: newspipe.ini.sample,v 1.2 2004/10/09 01:57:31 reyesric Exp $
 
 [NewsPipe]
 ; Console log
@@ -9,4 +9,21 @@ smtp_server=127.0.0.1
 ; OPML file
 opml=newspipe.opml
 ; Minutes between runs - set to zero for batch mode
-sleep_time=5
+sleep_time=0
+; Activate Debug
+;debug=1
+; URL to check online
+;check_online=http://www.google.com
+; Sender e-mMail
+;sender=rss@localhost
+; Send mail just after fetching the rss
+;send_immediate=1
+; Number of threads
+;workers=10
+; ???
+;textonly=
+; ???
+;offline=
+; ???
+;can_pipe=
+

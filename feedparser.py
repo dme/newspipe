@@ -11,7 +11,7 @@ Recommended: Python 2.3 or later
 Recommended: CJKCodecs and iconv_codec <http://cjkpython.i18n.org/>
 """
 
-#__version__ = "pre-3.3-" + "$Revision: 1.1 $"[11:15] + "-cvs"
+#__version__ = "pre-3.3-" + "$Revision: 1.2 $"[11:15] + "-cvs"
 __version__ = "3.3"
 __license__ = "Python"
 __copyright__ = "Copyright 2002-4, Mark Pilgrim"
@@ -68,11 +68,11 @@ except:
 # module is buggy and timeoutsocket is better.
 try:
     import timeoutsocket # http://www.timo-tasi.org/python/timeoutsocket.py
-    timeoutsocket.setDefaultSocketTimeout(20)
+    timeoutsocket.setDefaultSocketTimeout(60)
 except ImportError:
     import socket
     if hasattr(socket, 'setdefaulttimeout'):
-        socket.setdefaulttimeout(20)
+        socket.setdefaulttimeout(60)
 import urllib, urllib2
 
 _mxtidy = None

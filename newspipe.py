@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.25 $"
+__revision__ = "$Revision: 1.26 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
-__date__ = "2004-09-05"
+__date__ = "2004-10-08"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
-__contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.25 2004/10/09 00:57:43 reyesric Exp $"
+__contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://rage.against.org/>"]
+__id__ = "$Id: newspipe.py,v 1.26 2004/10/09 01:57:31 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -48,6 +48,7 @@ import logging
 import logging.handlers
 from urllib2 import URLError
 from email import message_from_string
+import gc
 
 has_html2text = True
 try:
@@ -58,13 +59,69 @@ except ImportError:
 PYTHON_VERSION = '.'.join([str(x) for x in sys.version_info])
 USER_AGENT = 'NewsPipe/'+__version__+' rev.'+__revision_number__+' Python: '+ PYTHON_VERSION+' Platform: '+sys.platform +' / '+__url__
 
+class MyLog:
+    cache = 2        # keep mem stats for "cache" seconds
+
+    h = None         # file handler
+    result = None    # memory string
+    lasttime = None  # last access to the file
+        
+    #def die(self): self.h.close()
+
+    def memory(self):
+        if sys.platform.lower().startswith('win'):
+            return ''
+        else:
+            if not self.lasttime:
+                self.lasttime = time.time() - self.cache - 1
+            if self.lasttime + self.cache >= time.time():
+                return self.result
+    
+            if not self.h:
+                self.h=file("/proc/self/status")
+            else:
+                self.h.seek(0)
+            x=self.h.read(1024)
+            result = ""
+            for l in x.split("\n"):
+                if l[0:2] != "Vm": continue
+                l = l.replace(" kB", "")
+                l = l.replace(" ", "")
+                l = l.replace("\t", "")
+                l = l.replace(":", ": ")
+                result = result + l + ","
+            # end for
+            if len(result) > 1:
+                self.result = result
+                result = result[:-1]
+            else:
+                result = self.result
+            result = "[" + result + "] "
+            return result
+        # end if
+    # end def
+    
+    def debug(self, msg, *args, **kwargs):
+        msg = self.memory() + msg
+        log.debug(msg, *args, **kwargs)
+    def info(self, msg, *args, **kwargs):
+        msg = self.memory() + msg
+        log.info(msg, *args, **kwargs)
+    def warning(self, msg, *args, **kwargs):
+        msg = self.memory() + msg
+        log.warning(msg, *args, **kwargs)
+    def exception(self, msg, *args, **kwargs):
+        msg = self.memory() + msg
+        log.exception(msg, *args, **kwargs)
+
+
 def LogFile(stderr=True, name='default', location='.', debug=False):
     if not os.path.exists(location):
         os.makedirs(location)
 
     logger = logging.getLogger(name)
     hdlr = logging.handlers.RotatingFileHandler(os.path.join(location, name+'.log'), maxBytes=1024*500, backupCount=10)
-    formatter = logging.Formatter('%(asctime)s %(levelname)-10s %(message)s')
+    formatter = logging.Formatter('%(asctime)s %(thread)d %(levelname)-10s %(message)s')
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr) 
 
@@ -85,11 +142,25 @@ def LogFile(stderr=True, name='default', location='.', debug=False):
 
 def intEnt(m):
     m = int(m.groups(1)[0])
-    return unichr(m).encode('latin1', 'ignore')
+    return unichr(m)
 
 def xEnt(m):
     m = int(m.groups(1)[0], 16)
-    return unichr(m).encode('latin1', 'ignore')
+    return unichr(m)
+
+def nameEnt(m):
+    m = m.groups(1)[0]
+    if m in entitydefs.keys():
+        return entitydefs[m].decode("latin1")
+    else: 
+        return "&"+m+";"
+    # end if
+
+def expandNumEntities(text):
+    text = re.sub(r'&#(\d+);', intEnt, text)
+    text = re.sub(r'&#[Xx](\w+);', xEnt, text)
+    text = re.sub(r'&(.*?);', nameEnt, text)
+    return text
 
 def expandEntities(text):
     text = text.replace("&lt;", "<")
@@ -100,7 +171,9 @@ def expandEntities(text):
     text = text.replace("&middot;", "*")
     text = re.sub("&[rl]squo;", "'", text)
     text = re.sub("&[rl]dquo;", '"', text)
-    text = re.sub("&([aeiou])(grave|acute|circ|tilde|uml|ring);", lambda m: m.groups(1)[0], text)
+    text = re.sub("&([aeiouAEIOU])(grave|acute|circ|tilde|uml|ring);", lambda m: m.groups(1)[0], text)
+    text = re.sub("&([cC])(cedil);", lambda m: m.groups(1)[0], text)
+    text = re.sub("&([n])(tilde);", lambda m: m.groups(1)[0], text)
     text = re.sub(r'&#(\d+);', intEnt, text)
     text = re.sub(r'&#[Xx](\w+);', xEnt, text)
     text = re.sub("&(#169|copy);", "(C)", text)
@@ -178,6 +251,20 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
 
     global cache, log
 
+    if not isinstance(text, unicode):
+        text = text.decode('latin1')
+    # end if
+    if isinstance(text, unicode):
+        text = text.encode('utf-8')
+    # end if
+    
+    if not isinstance(html, unicode):
+        html = html.decode('latin1')
+    # end if
+    if isinstance(html, unicode):
+        html = html.encode('utf-8')
+    # end if
+    
     out = cStringIO.StringIO() # output buffer for our message
     htmlin = cStringIO.StringIO(html)
     txtin = cStringIO.StringIO(text)
@@ -193,7 +280,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
     #
 
     for x,y in headers:
-        writer.addheader(x, y.encode('latin1', 'replace'))
+        writer.addheader(x, y.encode('utf-8'))
 
     writer.addheader("MIME-Version", "1.0")
     #
@@ -201,18 +288,34 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
     # multipart/alternative seems to work better
     # on some MUAs than multipart/mixed
     #
-    writer.startmultipartbody("related")
+    writer.startmultipartbody("alternative")
     writer.flushheaders()
+
+    #
+    # the plain text section
+    #
+
+    subpart = writer.nextpart()
+    subpart.addheader("Content-Transfer-Encoding", "quoted-printable")
+    pout = subpart.startbody("text/plain", [("charset", 'utf-8'), ("delsp", 'yes'), ("format", 'flowed')])
+    mimetools.encode(txtin, pout, 'quoted-printable')
+    pout.write (txtin.read())
+    txtin.close()
 
     #
     # start the html subpart of the message
     #
-    subpart = writer.nextpart()
+    if images:
+        htmlpart = writer.nextpart()
+        htmlpart.startmultipartbody("related")
+        subpart = htmlpart.nextpart()
+    else:
+        subpart = writer.nextpart()
     subpart.addheader("Content-Transfer-Encoding", "quoted-printable")
     #
     # returns us a file-ish object we can write to
     #
-    pout = subpart.startbody("text/html", [("charset", 'utf8')])
+    pout = subpart.startbody("text/html", [("charset", 'utf-8')])
     mimetools.encode(htmlin, pout, 'quoted-printable')
     htmlin.close()
 
@@ -232,6 +335,9 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                     # end if
                 # end if
                 
+                if ext == "jpg": ext="jpeg"
+                content_type = "image/%s"%(ext)
+
                 if link:
                     # if the url is relative, then add the link url to form an absolute address
                     url_parts = urlparse.urlsplit(x['url'])
@@ -241,6 +347,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                         # end if
                     # end if
                 # end if
+                x['url'] = x['url'].replace(' ', '%20')
             
                 retries = 0;
                 MAX_RETRIES = 3;
@@ -256,18 +363,18 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                     except HTTPError, e:
                         # in case of HTTP error 403 ("Forbiden") retry without the Referer
                         if e.code == 403 and img_referer:
-                            log.info ('HTTP error 403 downloading %s, retrying without the referer' % (x['url'],))
+                            mylog.info ('HTTP error 403 downloading %s, retrying without the referer' % (x['url'],))
                             img_referer = None
                         else:
                             raise
                         # end if
                     except (socket.timeout, socket.error):
-                        log.info ('Timeout error downloading %s' % (x['url'],))
+                        mylog.info ('Timeout error downloading %s' % (x['url'],))
                         if retries == MAX_RETRIES:
                             raise
                         # end if
                     except URLError, e:
-                        log.info ('URLError (%s) downloading %s' % (e.reason, x['url'],))
+                        mylog.info ('URLError (%s) downloading %s' % (e.reason, x['url'],))
                         if retries == MAX_RETRIES:
                             raise
                         # end if
@@ -279,7 +386,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
                         break
                     # end try
                             
-                    log.info ('Retrying, %d time' % retries);
+                    mylog.info ('Retrying, %d time' % retries);
                 # end while
 
                 if not resource:
@@ -288,14 +395,16 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
 
                 explicacion = resource.info['Cache-Result']
 
-                log.debug (explicacion + ' ' + x['url'])
+                mylog.debug (explicacion + ' ' + x['url'])
 
                 info = resource.info
-                content_type = info['Content-Type']
+                if 'Content-Type' in info.keys():
+                    content_type = info['Content-Type']
+                # end if
 
-                subpart = writer.nextpart()
+                subpart = htmlpart.nextpart()
                 subpart.addheader("Content-Transfer-Encoding", "base64")
-                subpart.addheader("Content-Disposition", "inline; filename=\"" +x['name'] + "\"" )
+                subpart.addheader("Content-Disposition", "inline; filename=\"" +x['filename'] + "\"" )
                 subpart.addheader("Content-Id", x['name'])
                 subpart.addheader("Content-Location", x['name'])
                 f = subpart.startbody(content_type, [["name", x['name']]])
@@ -306,19 +415,19 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
             except KeyboardInterrupt:
                 raise
             except socket.timeout:
-                log.info ('Timeout error downloading %s' % (x['url'],))
+                mylog.info ('Timeout error downloading %s' % (x['url'],))
                 image_ok = False
             except HTTPError, e:
-                log.info ('HTTP Error %d downloading %s' % (e.code, x['url'],))
+                mylog.info ('HTTP Error %d downloading %s' % (e.code, x['url'],))
                 image_ok = False
             except URLError, e:
-                log.info ('URLError (%s) downloading %s' % (e.reason, x['url'],))
+                mylog.info ('URLError (%s) downloading %s' % (e.reason, x['url'],))
                 image_ok = False
             except OfflineError:
-                log.info ('Resource unavailable when offline (%s)' % x['url'])
+                mylog.info ('Resource unavailable when offline (%s)' % x['url'])
                 image_ok = False
             except Exception, e:
-                log.exception ('Error %s downloading %s' % (str(e), x['url'],))
+                mylog.exception ('Error %s downloading %s' % (str(e), x['url'],))
                 image_ok = False
             # end try
             if not image_ok:
@@ -326,19 +435,12 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
             # end if
         # end for
     # end if
+    if images:
+        htmlpart.lastpart()
 
     #
-    # the plain text section
+    # the feed section
     #
-
-    #out.write(text)
-
-    subpart = writer.nextpart()
-    subpart.addheader("Content-Transfer-Encoding", "quoted-printable")
-    pout = subpart.startbody("text/plain", [("charset", 'iso-8859-1'), ("delsp", 'yes'), ("format", 'flowed')])
-    mimetools.encode(txtin, pout, 'quoted-printable')
-    pout.write (txtin.read())
-    txtin.close()
 
     if rss_feed:
         subpart = writer.nextpart()
@@ -361,7 +463,7 @@ def createTextEmail(text, headers):
     t = '\r\n'.join([x+': '+y for x,y in headers])
     t += '\r\n\r\n'
     t += text
-    return message_from_string(t.encode('latin1', 'replace'))
+    return message_from_string(t.encode('utf-8', 'replace'))
 # end def    
 
 
@@ -380,8 +482,8 @@ class Channel:
         self.download_link = download_link
         self.diff = diff
 
-    def NewItem(self, original):
-        return Item(original, self)
+    def NewItem(self, original, encoding="utf-8"):
+        return Item(original, self, encoding)
     # end def
 # end class
 
@@ -437,7 +539,7 @@ def SanitizeText (text):
                 text = text.replace(c, '')
     
 
-    text = re.sub(r'&#(\d+);', getEntity, text.encode('utf-8'))
+    text = re.sub(r'&#(\d+);', getEntity, text)
     return text
 
 
@@ -459,19 +561,19 @@ for key,value in entitydefs.items():
 # end for
 
 def corregirEntitys(texto):
+    '''This function replaces special characters with &entities; '''
     if not texto:
         return texto
     # end if
 
-    if isinstance(texto, unicode):
-        texto = texto.encode('latin1', 'ignore')
-    # end if
-   
+    if not isinstance(texto, unicode):
+        texto = texto.decode('latin1')
+
     result = ''
     for c in texto:
         if not (c in ('<', '>', '/', '"', "'", '=', '&')):
-            if c in entitydefs2.keys():
-                rep = entitydefs2[c]
+            if c.encode("latin1", 'replace') in entitydefs2.keys():
+                rep = entitydefs2[c.encode("latin1", "replace")]
                 rep = '&'+rep+';'
                 result += rep
             else:
@@ -481,10 +583,6 @@ def corregirEntitys(texto):
             result += c
         # end if
     # end for
-
-    if not isinstance(result, unicode):
-        result = unicode(result, 'latin1', 'replace')
-    # end if
 
     return result
 # end def
@@ -500,11 +598,11 @@ semaforo_html2text = threading.BoundedSemaphore()
 
 def makeHeader(text):
     if not isinstance(text, unicode):
-        text = text.decode('latin1', 'replace')
+        text = text.decode('latin1')
     # end if
 
     if isinstance(text, unicode):
-        text = text.encode('latin1', 'replace')
+        text = text.encode('utf-8')
     # end if
     
     try:
@@ -513,12 +611,14 @@ def makeHeader(text):
     except UnicodeError:
         pass
 
-    return str(email.Header.make_header([(text, 'latin1')]))
+    return str(email.Header.make_header([(text, 'utf-8')]))
 # end def    
 
 
 def getPlainText(html, links=True):
-    html_orig = html
+    if not isinstance(html, unicode):
+        html = html.decode('latin1')
+    # end if
     plain_text = u''
     if has_html2text:
         # html2text seems to be not-thread-safe, so I'm avoiding concurrency
@@ -526,17 +626,10 @@ def getPlainText(html, links=True):
         semaforo_html2text.acquire()
         try:
             try:
-                if not isinstance(html, unicode):
-                    html = html.decode('latin1', 'replace')
-                # end if
-
-                if isinstance(html, unicode):
-                    html = html.encode('utf8', 'replace')
-                # end if
                 plain_text = html2text(html).strip()
             except:
                 plain_text = getException ()
-                log.exception ('Error en getPlainText')
+                mylog.exception ('Error en getPlainText')
             # end try
         finally:
             semaforo_html2text.release()
@@ -544,7 +637,7 @@ def getPlainText(html, links=True):
     # end if
 
     if not isinstance(plain_text, unicode):
-        plain_text = plain_text.decode('latin1')
+        plain_text = plain_text.decode('utf-8')
     # end if
 
     return plain_text
@@ -558,15 +651,23 @@ def md5texto(texto):
 
 
 class Item:
-    def __init__(self, original, channel):
+    def __init__(self, original, channel, encoding="utf-8"):
         global historico_posts
+
+        if encoding == '': encoding="utf-8"
+
+        for key in original.keys():
+            if type(original.get(key)) == type(""):
+                original[key] = original[key].decode(encoding, "replace")
+            # end if
+        # end for
 
         self.original = original
         self.link = GetValue(original.get('link', channel.htmlUrl))
 
         self.texto_nuevo = ''
         self.text_key = 'None'
-        for k in 'content body content_encoded description summary symmary_detail'.split():
+        for k in 'content body content_encoded description summary summary_detail'.split():
             if k in original.keys():
                 if original[k]:
                     self.texto_nuevo = original[k]
@@ -575,6 +676,10 @@ class Item:
                 # end if
             # end if
         # end for
+        if self.text_key == None and 'summary_detail' in original.keys() and 'value' in original['summary_detail'].keys():
+            self.texto_nuevo = original['summary_detail']['value']
+            self.text_key = "summary_detail/value"
+        # end if
 
         self.texto_nuevo = GetValue (self.texto_nuevo)
 
@@ -582,11 +687,11 @@ class Item:
             try:
                 downloaded_file = cache.urlopen(self.link, max_age=999999, can_pipe=False);
                 explicacion = downloaded_file.info['Cache-Result']
-                log.debug (explicacion + ' ' + self.link)
+                mylog.debug (explicacion + ' ' + self.link)
             except KeyboardInterrupt:
                 raise
             except:
-                log.exception ('Cannot download '+self.link)
+                mylog.exception ('Cannot download '+self.link)
                 downloaded_file = None
             # end try
 
@@ -595,13 +700,16 @@ class Item:
             # end if
         # end if
 
+        if type(self.texto_nuevo) == type(""):
+            try:
+                self.texto_nuevo = self.texto_nuevo.decode(encoding)
+            except UnicodeDecodeError, e:
+                mylog.debug("Error in " + channel.xmlUrl + ", " + original.get('title', original.get('url', '?')) + ": " + str(e))
+                self.texto_nuevo = self.texto_nuevo.decode(encoding, 'replace')
+            # end try
+        # end if
         self.texto_nuevo = corregirEntitys(self.texto_nuevo)
-
-        try:
-            self.subject = GetValue (original.get('title', ''))
-        except UnicodeDecodeError:
-            log.exception ('Unicode error '+channel.xmlUrl)
-            self.subject = ''
+        self.subject = GetValue (original.get('title', ''))
 
         if not self.subject:
             sin_html = ' '.join(re.compile('<.+?>').split(self.texto_nuevo))
@@ -615,14 +723,14 @@ class Item:
         # end if
 
         m = md5.new()
-        m.update (self.link.encode('latin1', 'replace'))
-        m.update (channel.xmlUrl.encode('latin1', 'replace'))
-        m.update (self.subject.encode('latin1', 'replace'))
+        m.update (self.link.encode('utf-8', 'replace'))
+        m.update (channel.xmlUrl)
+        m.update (self.subject.encode('utf-8', 'replace'))
         self.urlHash = m.hexdigest()
 
         self.subject = self.subject
 
-        if ('modified_parsed' in original.keys()) and (original['modified_parsed']):
+        if 'modified_parsed' in original.keys() and original['modified_parsed'] != None:
             x = original['modified_parsed']
             self.timestamp = datetime(year=x[0], month=x[1], day=x[2], hour=x[3], minute=x[4], second=x[5])
         else:
@@ -630,6 +738,7 @@ class Item:
         # end if
 
         self.texto = self.texto_nuevo
+        # HERE
         if channel.diff and historico_posts.has_key(self.urlHash):
             differ = TextDiff(historico_posts[self.urlHash]['text'], self.texto_nuevo)
             self.texto = differ.getDiff()
@@ -661,63 +770,71 @@ class Item:
     # end def
 
     def GetEmail(self, envio, destinatario, plaintext=False):
+        global historico_posts
         template = """
-<FONT FACE="Arial,Helvetica,Geneva">
+<font face="Arial,Helvetica,Geneva">
     <p>
         __body__
     </p>
-
+    <hr />
     <p>
-        <a href="__permalink__">
-            Link
-        </a>
+        Home: <a href="__htmlUrl__">__htmlUrl__</a>
         &nbsp;&nbsp;&nbsp;
-        <a href="__htmlUrl__">
-            Home
-        </a>
+        Link: <a href="__permalink__">__permalink__</a>
     </p>
-</FONT>
+</font>
 """
 
+        self.texto = expandNumEntities(self.texto)
         body = self.texto
+        text_version = getPlainText (body)
+        text_version = text_version + "\n\n" + "Home: [" + self.channel.htmlUrl + "]\n" + "Link: [" + self.link + "]\n";
 
         html_version = template
         html_version = html_version.replace('__body__', body)
         html_version = html_version.replace('__permalink__', self.link)
         html_version = html_version.replace('__htmlUrl__', self.channel.htmlUrl)
 
-        text_version = getPlainText (html_version)
-
         if not plaintext:
             urls = re.findall(re.compile('<.*?img.+?src.*?=.*?[\'"](.*?)[\'"]', re.IGNORECASE), html_version)
             images = None
             if urls:
                 images = []
+                seenurls = []
                 i = 0
                 for url in urls:
                     if url:
                         # check if this url was already proccesed
                         previous = [x['url'] for x in images]
                         if not (url in previous):
+                            filename = os.path.basename(url)
+                            if '?' in filename:
+                                filename = filename[:filename.find('?')]
                             ext = os.path.splitext(url)[1]
                             if '?' in ext:
                                 ext = ext[:ext.find('?')]
                             # end if
                             name = 'image%d%s' % (i,ext)
                             html_version = html_version.replace('%s' % (url,), '%s' % (name,))
-                            images += [{'name':name, 'url':url},]
+                            images += [{'name':name, 'url':url, 'filename':filename},]
                             i += 1
                         # end if
                     # end if
                 # end for
+                seenurls = None
             # end if
+        # end if
+
+        if envio == None:
+            envio = destinatario[1]
         # end if
 
         headers = []
         headers += [('From', '"%s" <%s>' % (makeHeader(self.channel.title), envio)),]
         headers += [('To', '"%s" <%s>' % (destinatario[0], destinatario[1],)),]
         headers += [('Subject', makeHeader(self.subject)),]
-        headers += [('Message-ID', email.Utils.make_msgid()),]
+        msgid = email.Utils.make_msgid()
+        headers += [('Message-ID', msgid),]
         headers += [('Date', self.timestamp.strftime("%a, %d %b %Y %H:%M:%S +0000")),]
 
         headers += [('X-Item-Attributes', ', '.join(self.original.keys())),]
@@ -733,10 +850,29 @@ class Item:
         headers += [('X-Item-Hash-Subject', md5texto(self.subject.encode('latin1', 'replace'))),]
         headers += [('X-Item-Hash', self.urlHash),]
        
+        lastid = historico_feeds[self.channel.xmlUrl].get("lastid", "")
+        if lastid == "":
+            m = md5.new()
+            m.update (self.channel.xmlUrl)
+            refid = "<" + m.hexdigest() + "@rss.example.com>"
+            lastid = refid
+        else:
+            refid = lastid.split()[-1]
+        # endif
+        
+        headers += [('In-Reply-To', refid),]
+        headers += [('References', lastid),]
+ 
+        if historico_feeds[self.channel.xmlUrl].has_key("lastid"):
+            historico_feeds[self.channel.xmlUrl]["lastid"] = " ".join( (historico_feeds[self.channel.xmlUrl]["lastid"] + " " + msgid).split()[-4:] )
+        else:
+            historico_feeds[self.channel.xmlUrl]["lastid"] = refid + " " + msgid
+        historico_feeds["modified"]=True
+ 
         if plaintext:
             return createTextEmail (text_version, headers)
         else:
-            return createhtmlmail (html_version.encode('latin-1', 'replace'), text_version, headers, images, None, self.link)
+            return createhtmlmail (html_version, text_version, headers, images, None, self.link)
         # end if
     # end def
 # end class
@@ -764,16 +900,31 @@ def EnviarEmails(msgs, server):
             smtp = smtplib.SMTP(server)
             smtp.set_debuglevel(0)
 
+            count = 0;
             for msg in msgs:
+                if msg == None: continue
                 fromaddr = msg['From']
                 toaddr = msg['To']
 
-                # build envelope and send message
-                smtp.sendmail(fromaddr, toaddr, msg.as_string(unixfrom=False))
-                log.debug('mail sent to %s from %s ' % (toaddr, fromaddr))
+                try:
+                    # build envelope and send message
+                    smtp.sendmail(fromaddr, toaddr, msg.as_string(unixfrom=False))
+                    count = count + 1
+                    mylog.debug('mail sent to %s from %s ' % (toaddr, fromaddr))
+                except smtplib.SMTPDataError, e:
+                    mylog.warning("Error sending mail ("+str(e)+")")
+                    mylog.warning(msg)
+                except socket.timeout:
+                    sleep(3)
+                    smtp.sendmail(fromaddr, toaddr, msg)
+                # end try
+
             # end for
             smtp.quit()
-            log.info ('%d emails sent successfully' % (len(msgs),))
+            if count != len(msgs):
+                note = " (" + str(len(msgs)-count) +" failed)"
+            else: note=""
+            mylog.info ('%d emails sent successfully%s' % (count,note,))
         finally:
             semaforo_email.release()
     # end if
@@ -801,7 +952,7 @@ def AgruparItems(lista, titles):
     lista.sort (cmpItems)
 
     template1 = """
-<FONT FACE="Arial,Helvetica,Geneva">
+<font face="Arial,Helvetica,Geneva">
     <p>
         <font size=+1>
             <strong>
@@ -819,18 +970,18 @@ def AgruparItems(lista, titles):
     <p>
         __body__
     </p>
-</FONT>
-<br clear=all>
-<hr>
+</font>
+<br clear=all />
+<hr />
 """
 
     template2 = """
-<FONT FACE="Arial,Helvetica,Geneva">
+<font face="Arial,Helvetica,Geneva">
     <p>
        <a href="__permalink__">#</a>&nbsp;
         __body__
     </p>
-</FONT>
+</font>
 """
 
     texto = ''
@@ -877,10 +1028,10 @@ def CargarHistoricos(name):
     try:
         file_name = os.path.join(data_dir, name+'.feeds')
         historico_feeds = load(open(file_name))
-        log.debug('Loading feed archive '+name+'.feeds')
+        mylog.debug('Loading feed archive '+name+'.feeds')
     except:
         try:
-            log.debug('Archive not found. Trying backup file '+name+'.feeds.bak')
+            mylog.debug('Archive not found. Trying backup file '+name+'.feeds.bak')
             file_name = os.path.join(data_dir, name+'.feeds.bak')
             historico_feeds = load(open(file_name))
         except:
@@ -895,11 +1046,11 @@ def CargarHistoricos(name):
 
     try:
         file_name = os.path.join(data_dir, name+'.posts')
-        log.debug('Loading post archive '+name+'.posts')
+        mylog.debug('Loading post archive '+name+'.posts')
         historico_posts = load(open(file_name))
     except:
         try:
-            log.debug('Archive not found. Trying backup file '+name+'.posts.bak')
+            mylog.debug('Archive not found. Trying backup file '+name+'.posts.bak')
             file_name = os.path.join(data_dir, name+'.posts.bak')
             historico_posts = load(open(file_name))
         except:
@@ -915,7 +1066,7 @@ def CargarHistoricos(name):
 def GrabarHistorico(dicc, name, extension):
     data_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/data'))
     
-    log.debug('Saving archive '+name+extension)
+    mylog.debug('Saving archive '+name+extension)
     dump(dicc, open(os.path.join(data_dir, name + extension +'.new'), 'w'))
 
     try: os.remove (os.path.join(data_dir, name+extension+'.bak'))
@@ -932,12 +1083,12 @@ def CheckOnline(config):
     if config.has_key('check_online'):
         url = config['check_online']
         try:
-            log.debug ('Checking online status (downloading '+url+')')
+            mylog.debug ('Checking online status (downloading '+url+')')
             urllib.urlopen(url)
-            log.debug ('Status: online')
+            mylog.debug ('Status: online')
             return True
         except:
-            log.debug ('Status: offline')
+            mylog.debug ('Status: offline')
             return False
     else:
         return True
@@ -976,7 +1127,10 @@ class FeedWorker (threading.Thread):
         movil_destino = self.movil_destino
         semaforo = self.semaforo
 
-        while True:
+        count = 100
+        while count:
+            gc.collect()
+            count = count - 1
             feed = self.feeds_queue.get()
             if feed is None:
                 break
@@ -1009,28 +1163,28 @@ class FeedWorker (threading.Thread):
                 # end if
 
                 title = feed.get('title', feed.get('text', url))
-                log.debug ('Processing '+title)
+                mylog.debug ('Processing '+title)
                 xml = None
                 try:
                     xml = cache.feed_parse(url, can_pipe=config.get('can_pipe', '0') == '1')
                 except socket.timeout:
-                    log.info ('Timeout error downloading %s' % url)
-                    log.debug ('Will retry in the the next pass')
+                    mylog.info ('Timeout error downloading %s' % url)
+                    mylog.debug ('Will retry in the the next pass')
                     continue
                 except HTTPError, e:
-                    log.info ('HTTP Error %d downloading %s' % (e.code, url,))
+                    mylog.info ('HTTP Error %d downloading %s' % (e.code, url,))
                 except URLError, e:
-                    log.info ('URLError (%s) downloading %s' % (e.reason, url,))
+                    mylog.info ('URLError (%s) downloading %s' % (e.reason, url,))
                 except OfflineError:
-                    log.info ('Resource unavailable when offline (%s)' % url)
+                    mylog.info ('Resource unavailable when offline (%s)' % url)
                 except Exception, e:
-                    log.exception ('Error %s downloading %s' % (str(e), url))
+                    mylog.exception ('Error %s downloading %s' % (str(e), url))
 
                 if xml:
-                    log.debug (xml['channel']['Cache-Result'] + ' ' + url)
+                    mylog.debug (xml['channel']['Cache-Result'] + ' ' + url)
                     channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed.get('download_link', '0') == '1', feed.get('diff', '1') == '1')
                     for elemento in xml['items']:
-                        item = channel.NewItem(elemento)
+                        item = channel.NewItem(elemento, xml["encoding"])
 
                         if historico_posts.has_key(item.urlHash):
                             historico_posts[item.urlHash]['timestamp'] = datetime.now()
@@ -1056,9 +1210,9 @@ class FeedWorker (threading.Thread):
                 # end if xml:
 
                 if items:
-                    log.info ('%d new items in %s' % (items.__len__(),title))
+                    mylog.info ('%d new items in %s' % (items.__len__(),title))
                 else:
-                    log.debug ('No change in %s' % (title,))
+                    mylog.debug ('No change in %s' % (title,))
                 # end if
 
                 items_sin_agrupar = items[:]
@@ -1077,7 +1231,7 @@ class FeedWorker (threading.Thread):
                         EnviarEmails (emails, config['smtp_server'])
                     except Exception, e:
                         email_ok = False
-                        log.exception ('Error enviando los emails: %s' % (str(e),))
+                        mylog.exception ('Error enviando los emails: %s' % (str(e),))
                     # end try
                 else:
                     for item in items:
@@ -1094,7 +1248,7 @@ class FeedWorker (threading.Thread):
                           EnviarEmails (emails, config['smtp_server'])
                       except Exception, e:
                           email_ok = False
-                          log.exception ('Error enviando los emails: %s' % (str(e),))
+                          mylog.exception ('Error enviando los emails: %s' % (str(e),))
                       # end try
                    else:
                       for item in items:
@@ -1121,7 +1275,7 @@ class FeedWorker (threading.Thread):
                     ###semaforo.release()
                 # end if
             except:
-                log.exception ('Exception processing '+url)
+                mylog.exception ('Exception processing '+url)
         # end while
     # end def
 # end class
@@ -1146,24 +1300,25 @@ def MainLoop():
             log_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/log'))
             log = LogFile(config.get('log_console', '0')  == '1', 'newspipe', log_dir, DEBUG)        
         # end if
+        gc.collect()
 
         if DEBUG:
-            log.warning ('DEBUG MODE')
+            mylog.warning ('DEBUG MODE')
         # end if
 
-        log.debug ('Home directory: '+GetHomeDir())
+        mylog.debug ('Home directory: '+GetHomeDir())
 
         try:
-            log.debug ('Configuration settings:')
-            log.debug ('-'*30)
+            mylog.debug ('Configuration settings:')
+            mylog.debug ('-'*30)
             for x,y in config.items():
-                log.debug ('%s: %s', x, y)
+                mylog.debug ('%s: %s', x, y)
             # end for
-            log.debug ('-'*30)
+            mylog.debug ('-'*30)
 
             cache.offline = config.get('offline', '0') == '1'
             if cache.offline:
-                log.warning('Working offline')
+                mylog.warning('Working offline')
             # end if
 
             cache.debug = DEBUG
@@ -1176,9 +1331,9 @@ def MainLoop():
                 opml = None
                 try:
                     opml = AplanarArbol(ParseOPML(cache.urlopen(archivo, max_age=60, can_pipe=False).content))
-                    log.debug ('Processing file: '+archivo)
+                    mylog.debug ('Processing file: '+archivo)
                 except:
-                    log.exception ('Error parsing file: '+archivo)
+                    mylog.exception ('Error parsing file: '+archivo)
                     opml = None
 
                 if opml:
@@ -1225,25 +1380,20 @@ def MainLoop():
 
                     try:
                         EnviarEmails (emails, config['smtp_server'])
-                        if historico_feeds['modified']:
-                            GrabarHistorico (historico_feeds, opml['head']['title'], '.feeds')
-                        if historico_posts['modified']:
-                            GrabarHistorico (historico_posts, opml['head']['title'], '.posts')
                     except KeyboardInterrupt:
                         raise
                     except Exception, e:
-                        log.exception ('Error enviando los emails: %s' % (str(e),))
+                        mylog.exception ('Error enviando los emails: %s' % (str(e),))
                     # end try
 
-                    log.debug (archivo + ' finished.')
+                    mylog.debug (archivo + ' finished.')
 
                     # borrar las entradas del historico que son demasiado viejas
-                    historico_feeds, historico_posts = CargarHistoricos(opml['head']['title'])
                     for hash, value in historico_posts.items():
                         if hash == 'modified':
                             continue
                         timestamp = value['timestamp']
-                        delta = timedelta(days = 45) # borrar lo que tenga mas 45 dias de antiguedad - maybe this should be configurable too
+                        delta = timedelta(days = 30) # borrar lo que tenga mas 30 dias de antiguedad - maybe this should be configurable too
                         if (datetime.now() - delta) > timestamp:
                             del historico_posts[hash]
                             historico_posts['modified'] = True
@@ -1251,6 +1401,8 @@ def MainLoop():
                     # end for
                     if historico_posts['modified']:
                         GrabarHistorico (historico_posts, opml['head']['title'], '.posts')
+                    if historico_feeds['modified']:
+                        GrabarHistorico (historico_feeds, opml['head']['title'], '.feeds')
                 # end if
             # end if CheckOnline
 
@@ -1258,7 +1410,7 @@ def MainLoop():
             try:
                 cache.purge(10)
             except:
-                log.exception ('Unhandled exception when purging the cache')
+                mylog.exception ('Unhandled exception when purging the cache')
             # end try
 
             if int(config.get('sleep_time', '0')) == 0:
@@ -1268,13 +1420,15 @@ def MainLoop():
                 del(historico_posts)
                 historico_feeds, historico_posts = None, None
 
-                log.debug ('Going to sleep for %s minutes' % (config['sleep_time'],))
-                for sec in range(int(config['sleep_time'])*60):
-                    sleep(1)
-                # end for
+                mylog.debug ('Going to sleep for %s minutes' % (config['sleep_time'],))
+                try:
+                    sleep(int(config['sleep_time'])*60)
+                except KeyboardInterrupt:
+                    return
+                # end try
             # end if
         except:
-            log.exception ('Unhandled exception')
+            mylog.exception ('Unhandled exception')
             raise  # stop the loop, to avoid infinite exceptions loops ;)
     # end while
 # end def
@@ -1285,11 +1439,12 @@ if __name__ == '__main__':
     print ABOUT_NEWSPIPE
 
     log = None
+    mylog=MyLog()
 
     cache_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/cache'))
     cache = Cache(cache_dir, agent=USER_AGENT)
     try:
         MainLoop()
     except KeyboardInterrupt:
-        pass
+        sys.exit(0)
 
