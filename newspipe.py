@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.7 $"
+__revision__ = "$Revision: 1.8 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0"
 __date__ = "2004-05-09"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>",]
-__id__ = "$Id: newspipe.py,v 1.7 2004/07/26 17:20:40 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.8 2004/07/30 23:41:44 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -699,7 +699,8 @@ class Item:
         # end if
 
         headers = []
-        headers += [('From', '"%s" <%s>' % (makeHeader(self.channel.title), destinatario[1])),]
+        envio = config.get( 'sender', destinatario[1] )
+        headers += [('From', '"%s" <%s>' % (makeHeader(self.channel.title), envio)),]
         headers += [('To', '"%s" <%s>' % (destinatario[0], destinatario[1],)),]
         headers += [('Subject', makeHeader(self.subject)),]
         headers += [('Message-ID', email.Utils.make_msgid()),]
@@ -1191,7 +1192,7 @@ def MainLoop():
                         if hash == 'modified':
                             continue
                         timestamp = value['timestamp']
-                        delta = timedelta(days = 45) # borrar lo que tenga mas 45 dias de antiguedad
+                        delta = timedelta(days = 45) # borrar lo que tenga mas 45 dias de antiguedad - maybe this should be configurable too
                         if (datetime.now() - delta) > timestamp:
                             del historico_posts[hash]
                             historico_posts['modified'] = True
@@ -1202,7 +1203,7 @@ def MainLoop():
                 # end if
             # end if CheckOnline
 
-            # erase from the cache anything older than 10 days
+            # erase from the cache anything older than 10 days - to be made configurable?
             cache.purge(10)
 
             if int(config.get('sleep_time', '0')) == 0:

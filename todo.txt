@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.12 2004/07/27 01:54:22 reyesric Exp $
+$Id: todo.txt,v 1.13 2004/07/30 23:41:44 rcarmo Exp $
 
 
 Testing
@@ -21,7 +21,6 @@ Features
 
 1000 Optionally send a text-only copy of some feeds to a second e-mail address
 1001 Create a "mobile" INI entry for 1000
-1002 Create a "sender" INI entry to optionally force the sender to be different from the user's e-mail address (makes filtering easier)
 1005 Create a INI entry to set the delay between checks (default 60 minutes) (name of the parameter undetermined yet)
 
 Bugs
@@ -30,7 +29,7 @@ Bugs
 2001 Inline images do not display correctly in IlohaMail (webmail)
 2003 MIME types for some images are generated as image/123131232 (random
 number). This seems to happen mostly on digest messages.
-next (2004)
+2004 print help text when newspipe.py is called with no OPML or .ini file around
 
 Documentation
 -------------
