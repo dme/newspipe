@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.44 $"
+__revision__ = "$Revision: 1.45 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.1"
 __date__ = "2004-12-05"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.44 2004/12/08 20:38:23 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.45 2004/12/14 01:56:25 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -74,7 +74,8 @@ OPML_DEFAULTS = {
     'check_text': '1',
     'delay': '60',
     'textonly': '0',
-    'mobile': '0'
+    'mobile': '0',
+    'download_images': '1'
 }
 
 CONFIG_DEFAULTS = {
@@ -913,8 +914,15 @@ class Item:
 
 
 def LeerConfig():
+    source_path = os.path.split(sys.argv[0])[0]
+
+    for p in ('.', source_path):
+        inifile = os.path.join(p, 'newspipe.ini')
+        if os.path.exists(inifile):
+            break
+
     ini = ConfigParser.ConfigParser()
-    ini.read('./newspipe.ini')
+    ini.read(inifile)
 
     result = {}
     for attr in ini.options('NewsPipe'):
@@ -1392,8 +1400,18 @@ def MainLoop():
 
                 opml = None
                 try:
-                    opml = AplanarArbol(ParseOPML(cache.urlopen(archivo, max_age=60, can_pipe=False).content), OPML_DEFAULTS)
+                    source_path = os.path.split(sys.argv[0])[0]
+                    for p in ('.', source_path):
+                        if os.path.exists (os.path.join(p, archivo)):
+                            archivo = os.path.join(p, archivo)
+                            break
+                            
+                    fp = cache.urlopen(archivo, max_age=60, can_pipe=False).content
+                    opml = AplanarArbol(ParseOPML(fp), OPML_DEFAULTS)
                     mylog.debug ('Processing file: '+archivo)
+                except URLError:
+                    mylog.error ('Cannot find the opml file: '+archivo)
+                    opml = None
                 except:
                     mylog.exception ('Error parsing file: '+archivo)
                     opml = None
@@ -1416,7 +1434,7 @@ def MainLoop():
                         if feed['active'] == '1':
                             feeds_queue.put(feed)
                         else:
-                            log.debug ('Ignoring the INactive feed: '+feed['xmlUrl'])
+                            log.debug ('Ignoring the Inactive feed: '+feed['xmlUrl'])
                     # end for
 
                     log.debug ('Inserting the end-of-work markers in the queue')
