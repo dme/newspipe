@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.30 $"
+__revision__ = "$Revision: 1.31 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.0.3"
 __date__ = "2004-10-08"
 __url__ = "https://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.30 2004/10/10 21:47:11 rcarmo Exp $"
+__id__ = "$Id: newspipe.py,v 1.31 2004/10/10 22:41:26 rcarmo Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -305,7 +305,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
     mimetools.encode(txtin, pout, 'quoted-printable')
     pout.write (txtin.read())
     txtin.close()
-
+    
     #
     # start the html subpart of the message
     #
@@ -408,13 +408,12 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None):
 
                 subpart = htmlpart.nextpart()
                 subpart.addheader("Content-Transfer-Encoding", "base64")
-                subpart.addheader("Content-Disposition", "inline; filename=\"" +x['filename'] + "\"" )
-                subpart.addheader("Content-Id", x['name'])
+                subpart.addheader("Content-ID", "<" + x['name'] + ">")
                 subpart.addheader("Content-Location", x['name'])
+                subpart.addheader("Content-Disposition", "inline; filename=\"" +x['filename'] + "\"" )
                 f = subpart.startbody(content_type, [["name", x['name']]])
                 b64 = base64.encodestring(resource.content.read())
                 f.write(b64)
-
                 image_ok = True  # the image was downloaded ok
             except KeyboardInterrupt:
                 raise
@@ -819,7 +818,7 @@ class Item:
                                 ext = ext[:ext.find('?')]
                             # end if
                             name = 'image%d%s' % (i,ext)
-                            html_version = html_version.replace('%s' % (url,), '%s' % (name,))
+                            html_version = html_version.replace('%s' % (url,), 'cid:%s' % (name,))
                             images += [{'name':name, 'url':url, 'filename':filename},]
                             i += 1
                         # end if
