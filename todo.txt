@@ -1,6 +1,6 @@
 Things to To
 ------------
-$Id: todo.txt,v 1.17 2004/09/04 14:40:30 rcarmo Exp $
+$Id: todo.txt,v 1.18 2005/03/28 12:43:53 rcarmo Exp $
 
 
 Testing
@@ -23,6 +23,7 @@ Features
 1005 Create a INI entry to set the delay between checks (default 60 minutes) (name of the parameter undetermined yet)
 1006 Tray Icon for windows
 1007 Message-ID header (generated from guid from single item feeds and a digest of all guids for digest feeds)
+1008 "filter" attribute on OPML feeds to remove banner advertising
 
 Bugs
 ----
