@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.22 2004/12/22 03:13:23 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.23 2004/12/26 22:12:20 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -136,6 +136,10 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 
 <p>There are two main sets of configuration options program-wide options set via a .INI file, and per-feed options set inside the <a href="#opml">OPML</a> file.</p> 
 
+<p>By default, <tt>Newspipe</tt> will look for the .ini file in the same folder where it's installed, but you can control the location of the ini file using the command line parameter: <tt>-i</tt> </p>
+
+<p>Every parameter set in the .ini file can be overrided using command line parameters. Execute <tt>newspipe.py --help</tt> to see the list of available parameters</p>
+
 <H3>.INI file Options</H3>
 
 <table class="flat">
@@ -193,7 +197,7 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>Number of threads to use simultaneusly. Bigger numbers should mean better performance, but with increased memory and CPU use.<br>Dialup users may want to change this to 3, since more threads may also mean more timeout errors for them.</td>
   </tr>
   <tr class="odd">
-    <td class="fixed">send_immediate</td>
+    <td class="fixed">send_inmediate</td>
     <td>0</td>
     <td>If set to 1, <tt>newspipe</tt> will send all messages as they are parsed instead of in a single long SMTP transaction at the end of its run. Useful to avoiding choking your SMTP server with a lot of messages at once.</td>
   </tr>
@@ -217,6 +221,12 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td class="fixed">encoding</td>
     <td>utf-8</td>
     <td><p> Determines the unicode encoding to use when composing the emails (you can find the list of possible values at <a href="http://www.python.org/dev/doc/devel/lib/standard-encodings.html">this page</a>) </p></td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">proxy</td>
+    <td>None</td>
+    <td><p> Determines the address and port of the proxy server to go trough, separated by a colon. For example: <tt>http://192.168.0.1:8080</tt></p></td>
+  </tr>
 </table>
  
 <H3>OPML Options</H3>
@@ -396,7 +406,10 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li><a href="http://the.taoofmac.com/space/">Rui Carmo</a>, for the initial logo, writing this documentation, for his Linux and MacOS testing and a lot of suggestions and bug reports.</li>
 <li><a href="http://www.litux.org">Bruno David Rodrigues</a>, for a number of <tt>MIME</tt> and <tt>UTF-8</tt> fixes, e-mail threading headers and memory usage debugging.</li>
 <li><a href="http://www.diveintomark.org/">Mark Pilgrim</a>, author of <tt>feedparser.py</tt> (<a href="http://www.feedparser.org/">download feedparser.py</a>)</li> 
-<li><a href="http://www.aaronsw.com/">Aaron Swartz</a>, author of <tt>html2text.py</tt> (<a href="http://www.aaronsw.com/2002/html2text">download html2text.py</a>)</li>
+<li>
+    <a href="http://www.aaronsw.com/">Aaron Swartz</a>, author of <tt>html2text.py</tt> (<a href="http://www.aaronsw.com/2002/html2text">download html2text.py</a>)</p>
+    <br/> Aaron has program similar to <tt>Newspipe</tt> called <a href="http://www.aaronsw.com/2002/rss2email/">rss2email</a>. I've never tried it myself, but you should give it a try if you have problems with <tt>Newspipe</tt>. Oddly enough, I found out about it AFTER using <tt>html2text.py</tt> for several months in <tt>Rss2pop3</tt> (the predecessor of <tt>Newspipe</tt>).
+</li>
 <li>Newspaper image from <a href="http://freetubes.com/">Free Tubes</a>, used with permission.</li>
 </ul>
 
@@ -419,6 +432,13 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <H2>Changelog</H2>
 
 <ul>
+    <li class="release"> v1.1.4 &nbsp; 26-December-2004
+        <ul class="release_text">
+            <li> Support for proxy servers, controlled with the new .ini file parameter: <tt>proxy</tt> <b>(Thanks to David Malkovsky for this)</b></li>
+            <li> New command line parameter: <tt>--inifile</tt> to control the location and name of the .ini file </tt>
+            <li> Now all the parameters in the .ini file can be overridden with command line parameters. (use the --help parameter to see a list of available options) </li>
+        </ul>
+    </li>
     <li class="release"> v1.1.3 &nbsp; 21-December-2004
         <ul class="release_text">
             <li> Fixed a bug resolving relative urls, introduced in v1.1.2</li>

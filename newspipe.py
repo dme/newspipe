@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.47 $"
+__revision__ = "$Revision: 1.48 $"
 __revision_number__ = __revision__.split()[1]
-__version__ = "1.1.3"
-__date__ = "2004-12-21"
+__version__ = "1.1.4"
+__date__ = "2004-12-26"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.47 2004/12/22 03:13:23 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.48 2004/12/26 22:12:20 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -43,6 +43,7 @@ import urlparse
 import traceback
 import sys
 import urllib
+import urllib2
 import logging
 import logging.handlers
 from urllib2 import URLError
@@ -88,7 +89,8 @@ CONFIG_DEFAULTS = {
     'send_inmediate': '0',
     'multipart': 'on',
     'can_pipe': '0',
-    'encoding': 'utf-8'
+    'encoding': 'utf-8',
+    'proxy': ''
 }
 
 class MyLog:
@@ -929,12 +931,41 @@ class Item:
 
 
 def LeerConfig():
-    source_path = os.path.split(sys.argv[0])[0]
+    from optparse import OptionParser
 
-    for p in ('.', source_path):
-        inifile = os.path.join(p, 'newspipe.ini')
-        if os.path.exists(inifile):
-            break
+    parser = OptionParser()
+    parser.add_option("-i", "--inifile", dest="inifile", help=".ini file with the configuration")
+    parser.add_option("-o", "--opml", dest="opml", help="the filename or URL of the OPML file with the list of feeds to check")
+    parser.add_option("-s", "--smtp_server", dest="smtp_server", help="fully qualified domain name or IP address of the SMTP server to send messages through")
+    parser.add_option("-e", "--sender", dest="sender", help="optional e-mail address to use as From: - overrides the OPML ownerEmail field.")
+    parser.add_option("-t", "--textonly", action="store_const", const="1", dest="textonly", help=" all the messages sent by newspipe will be sent in plaintext format, without any HTML")
+    parser.add_option("-l", "--log_console", action="store_const", const="1", dest="log_console", help="send logging output to the console and to the log file.")
+    parser.add_option("-c", "--check_online", dest="check_online", help="URL of a webpage that the program will try to fetch to determine if there is a network connection available")
+    parser.add_option("-d", "--sleep_time", dest="sleep_time", help="Number of minutes to wait before re-checking feeds")
+    parser.add_option("-b", "--batch", action="store_const", const="0", dest="sleep_time", help="process all feeds and exit inmediatly")
+    parser.add_option("-f", "--offline", action="store_const", const="1", dest="offline", help="the program won't try to fetch any data from the internet, using cached versions instead")
+    parser.add_option("-x", "--debug", action="store_const", const="1", dest="debug", help="log a lot of debug information")
+    parser.add_option("-w", "--workers", dest="workers", help="Number of threads to use simultaneusly")
+    parser.add_option("-n", "--send_inmediate", action="store_const", const="1", dest="send_inmediate", help="send messages as soon as possible, instead of waiting to the end")
+    parser.add_option("-m", "--multipart", action="store_const", const="on", dest="multipart", help=" include a plaintext version of item contents as well as an HTML version.")
+    parser.add_option("-p", "--can_pipe", action="store_const", const="1", dest="can_pipe", help="Allow the pipe:// protocol in urls")
+    parser.add_option("-u", "--encoding", dest="encoding", help="unicode encoding to use when composing the emails")
+    parser.add_option("-r", "--proxy", dest="proxy", help="addess and port of the proxy server to use")
+    
+    (options, args) = parser.parse_args()
+    
+    if options.inifile:
+        inifile = options.inifile
+    else:
+        source_path = os.path.split(sys.argv[0])[0]
+    
+        for p in ('.', source_path):
+            inifile = os.path.join(p, 'newspipe.ini')
+            if os.path.exists(inifile):
+                break
+
+    if not os.path.exists(inifile):
+        raise ValueError ("Can't find the ini file at "+inifile)
 
     ini = ConfigParser.ConfigParser()
     ini.read(inifile)
@@ -947,6 +978,19 @@ def LeerConfig():
     for key, value in CONFIG_DEFAULTS.items():
         if not key in result.keys():
             result[key] = value
+            
+    for key in [x.dest for x in parser.option_list]:
+        if key:
+            value = getattr(options, key)
+            if value:
+                result[key] = value
+    
+    if result['proxy']:    
+        if not '://' in result['proxy']:
+            result['proxy'] = 'http://' + result['proxy']
+        proxy_support = urllib2.ProxyHandler({"http":result['proxy']})
+        opener = urllib2.build_opener(proxy_support)
+        urllib2.install_opener(opener)
             
     return result
 # end def
@@ -1145,7 +1189,7 @@ def CheckOnline(config):
         url = config['check_online']
         try:
             mylog.debug ('Checking online status (downloading '+url+')')
-            urllib.urlopen(url)
+            urllib2.urlopen(url)
             mylog.debug ('Status: online')
             return True
         except:
