@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.29 2005/03/28 12:42:55 rcarmo Exp $">
+<meta name="version" value="$Id: manual.html,v 1.30 2005/04/07 03:38:02 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -132,7 +132,9 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
 <li><tt>opml</tt> should point to your OPML file that lists the feeds you are subscribed to. If your are currently using another aggregator, it probably has an option or command to export your subscription list. If not, you can start a new file editing the <tt>test.ompl</tt> included in the .zip file you downloaded. </li>
 </ul>
 
-<p>Make sure that the <tt>ownerName</tt> and <tt>ownerEmail</tt> options at the top of the OPML file are correct. They should show your name and email address, and <tt>Newspipe</tt> will use them to form the recipient of the emails.</p>
+<p>Make sure that the <tt>ownerName</tt> and <tt>ownerEmail</tt> options at the top of the OPML file are correct. They should show your name and email address, and <tt>Newspipe</tt> will use them to form the recipient of the emails. You can address the emails to multiple recipients by separating them with commas. (<tt>For example: &lt;ownerEmail&gt;first@example.com, second@example.com&lt;/ownerEmail&gt;</tt>)</p>
+
+<p>You can also set the optional tags <tt>fromName</tt> and <tt>fromEmail</tt> to control the originating address of the emails. If you don't, <tt>Newspipe</tt> will try to form the originating address with the feed's name and the author's email.</p>
 
 <p>Once the configuration files are set, just execute the script <tt>Newspipe.py</tt>. In Windows, it's usually enough to double-click on it, or you can create a shortcut to it. In Unix/Linux, run it trough Python's interpreter, with the command: <tt> python Newspipe.py </tt> (assuming Python binaries are in the search PATH).
 
@@ -241,6 +243,21 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td class="fixed">subject</td>
     <td>None</td>
     <td><p> The value of this parameter will be added at the begining of the subject of every email, so that they can be identified and filtered by mail programs that can't access the mail headers </p></td>
+  </tr>
+  <tr>
+    <td class="fixed">smtp_auth</td>
+    <td>0</td>
+    <td><p> If set to "1", <tt>Newspipe</tt> will use SMTP Authorization when connecting to the SMTP server</p></td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">smtp_user</td>
+    <td>None</td>
+    <td><p> If <tt>smtp_auth</tt> is set to "1", the value of this setting will be used as the username when connecting to the smtp server </p></td>
+  </tr>
+  <tr>
+    <td class="fixed">smtp_pass</td>
+    <td>None</td>
+    <td><p> If <tt>smtp_auth</tt> is set to "1", the value of this setting will be used as the password when connecting to the smtp server </p></td>
   </tr>
 </table>
  
@@ -381,6 +398,18 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td class="fixed">mobile_time</td>
     <td>None</td>
     <td>The value of this parameter should be a time range in the form <tt>"10:00 to 21:00"</tt>, and only has effect when the <tt>mobile</tt> option is set to "1". If present, <tt>Newspipe</tt> will send the text email to the secondary address only when the current time is inside the indicated time range. For example, you can set this option to <tt>"8:00 - 21:00"</tt> to avoid receiving alerts in your phone during the night</td>
+  </tr>
+  <tr>
+    <td class="fixed">remove</td>
+    <td><i>None</i></td>
+    <td>The value in this parameter should be a regular expression. Any text that matches this regular expression in the feed will be removed (specially usefull to remove ads). For example, you can use this:
+        <br/>
+        <br/>
+        <tt>remove="&amp;lt;a .+? http://feeds.feedburner.com/ .+? iBag\?a= .+? &amp;lt;/a&amp;gt;"</tt>
+        <br/>
+        <br/>
+        to remove adds from Boing Boing (and probably from other "feedburner enhaced" feeds)
+    </td>
   </tr>
 </table>
 
@@ -529,6 +558,14 @@ you want to filter or process them in some way with your mail client.
 <H2>Changelog</H2>
 
 <ul>
+    <li class="release"> v1.1.8 &nbsp; 06-April-2005
+        <ul class="release_text">
+            <li> New opml attribute "remove". The value should be a regular expression, and Newspipe will eliminate any text that matches that regular expression from the feeds text. Usefull to remove ads from feeds</li>
+            <li> SMTP Authorization support<b>(Thanks to lwiechec for this)</b></li>
+            <li> New OPML head tags: fromEmail and fromName <b>(Thanks to lwiechec for this too)</b></li>
+            <li> Newspipe can now send the emails to multiple recipients, separating the email address es with ","</li>
+        </ul>
+    </li>
     <li class="release"> v1.1.7 &nbsp; 20-March-2005
         <ul class="release_text">
             <li> Now all the unknown attributes in the OPML file will be turned into X-Custom-... headers in the emails, for sorting and filtering purposes. </li>
