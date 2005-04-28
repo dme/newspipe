@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.59 $"
+__revision__ = "$Revision: 1.60 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.8"
 __date__ = "2005-04-06"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.59 2005/04/07 02:49:25 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.60 2005/04/28 00:44:45 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -1257,7 +1257,11 @@ def AgruparItems(lista, titles, encoding):
 
 
 def CargarHistoricos(name):
-    data_dir = os.path.join(GetHomeDir(), '.newspipe/data')
+    if isinstance(name, unicode):
+        name = name.encode('latin1', 'replace')
+    
+    data_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/data'))
+
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
@@ -1307,6 +1311,9 @@ def CargarHistoricos(name):
 
 
 def GrabarHistorico(dicc, name, extension):
+    if isinstance(name, unicode):
+        name = name.encode('latin1', 'replace')
+        
     data_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/data'))
     
     mylog.debug('Saving archive '+name+extension)
