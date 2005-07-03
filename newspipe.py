@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.60 $"
+__revision__ = "$Revision: 1.61 $"
 __revision_number__ = __revision__.split()[1]
-__version__ = "1.1.8"
-__date__ = "2005-04-06"
+__version__ = "1.1.9"
+__date__ = "2005-07-03"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.60 2005/04/28 00:44:45 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.61 2005/07/03 21:38:45 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -79,7 +79,7 @@ OPML_DEFAULTS = {
     'download_images': '1',
     'check_time': '',
     'mobile_time': '',
-    'remove': ''
+    'remove': '',
 }
 
 CONFIG_DEFAULTS = {
@@ -89,7 +89,6 @@ CONFIG_DEFAULTS = {
     'offline': '0',
     'debug': '0',
     'workers': '10',
-    'send_immediate': '0',
     'multipart': 'on',
     'can_pipe': '0',
     'encoding': 'utf-8',
@@ -100,7 +99,10 @@ CONFIG_DEFAULTS = {
     'smtp_auth' : '0',
     'smtp_user' : '',
     'smtp_pass' : '',
-    'from_address' : ''
+    'from_address' : '',
+    'send_method': 'smtp',
+    'procmail': '',
+    'reverse' : '0'
 }
 
 DEBUG = False
@@ -1058,7 +1060,6 @@ def LeerConfig():
     parser.add_option("-f", "--offline", action="store_const", const="1", dest="offline", help="the program won't try to fetch any data from the internet, using cached versions instead")
     parser.add_option("-x", "--debug", action="store_const", const="1", dest="debug", help="log a lot of debug information")
     parser.add_option("-w", "--workers", dest="workers", help="Number of threads to use simultaneusly")
-    parser.add_option("-n", "--send_immediate", action="store_const", const="1", dest="send_immediate", help="send messages as soon as possible, instead of waiting to the end")
     parser.add_option("-m", "--multipart", action="store_const", const="on", dest="multipart", help=" include a plaintext version of item contents as well as an HTML version.")
     parser.add_option("-p", "--can_pipe", action="store_const", const="1", dest="can_pipe", help="Allow the pipe:// protocol in urls")
     parser.add_option("-u", "--encoding", dest="encoding", help="unicode encoding to use when composing the emails")
@@ -1068,6 +1069,9 @@ def LeerConfig():
     parser.add_option("", "--smtp_authentication", action="store_const", const="0", dest="smtp_auth", help="authenticate with SMTP server")
     parser.add_option("", "--smtp_auth_user", dest="smtp_user", help="SMTP username used for authentication")
     parser.add_option("", "--smtp_auth_pass", dest="smtp_pass", help="SMTP password used for authentication")
+    parser.add_option("", "--send_method", dest="send_method", help="Method used to send the resulting emails. Possible values: SMTP, PROCMAIL, BOTH")
+    parser.add_option("", "--procmail", dest="procmail", help="Path of the procmail script, used when SEND_METHOD=PROCMAIL or BOTH")
+    parser.add_option("", "--reverse", action="store_const", const="1", dest="reverse", help="reverse the order of emails as they are sent")
 
     
     (options, args) = parser.parse_args()
@@ -1109,34 +1113,37 @@ def LeerConfig():
         proxy_support = urllib2.ProxyHandler({"http":result['proxy']})
         opener = urllib2.build_opener(proxy_support)
         urllib2.install_opener(opener)
+        
+    if not (result['send_method'].lower() in ('smtp', 'procmail', 'both')):
+        raise ValueError ('The value of the parameter SEND_METHOD must be SMTP, PROCMAIL or BOTH')
             
     return result
 # end def
 
 
-semaforo_email = _threading.BoundedSemaphore()
-
-def EnviarEmails(msgs, server, auth, auth_user, auth_pass):
+def EnviarEmails(msgs, method, server, auth, auth_user, auth_pass, procmail, reverse):
     if msgs:
-        semaforo_email.acquire()
-        try:
+        if reverse:
+            msgs.reverse()
+        
+        if method.lower() in ('smtp', 'both'):
             smtp = smtplib.SMTP(server)
             # authenticate with SMTP server when there's need to
             if auth:
                 smtp.login(auth_user,auth_pass);
-
+    
             smtp.set_debuglevel(0)
-
+    
             count = 0;
             for msg in msgs:
                 if msg == None: 
                     continue
-
+    
                 fromaddr = msg['From']
-
+    
                 r = re.compile('<(.+?)>')
                 toaddr = r.findall(msg['To'])
-
+    
                 try:
                     # build envelope and send message
                     smtp.sendmail(fromaddr, toaddr, msg.as_string(unixfrom=False))
@@ -1149,19 +1156,47 @@ def EnviarEmails(msgs, server, auth, auth_user, auth_pass):
                     sleep(3)
                     smtp.sendmail(fromaddr, toaddr, msg)
                 # end try
+    
+                if count % 10 == 0:
+                    # close the connection and reconnect every 10 messages
+                    smtp.quit()
+                    smtp = smtplib.SMTP(server)
+                    # authenticate with SMTP server when there's need to
+                    if auth:
+                        smtp.login(auth_user,auth_pass);
+                    # end if
+                # end if
             # end for
-
+            
             smtp.quit()
             if count != len(msgs):
                 note = " (" + str(len(msgs)-count) +" failed)"
-            else: note=""
-            mylog.info ('%d emails sent successfully%s' % (count,note,))
-        finally:
-            semaforo_email.release()
+            else: 
+                note=""
+            mylog.info ('%d emails sent successfully%s via SMTP' % (count,note,))
+        # end if
+        
+        if method.lower() in ('procmail', 'both'):
+            count = 0
+            for msg in msgs:
+                fp = os.popen(procmail, 'w')
+                fp.write(msg.as_string(unixfrom=False))
+                status = fp.close()
+                
+                if status is None:
+                    count += 1
+                # end if
+            # end for
+            if count != len(msgs):
+                note = " (" + str(len(msgs)-count) +" failed)"
+            else: 
+                note=""
+            mylog.info ('%d emails sent successfully%s via PROCMAIL' % (count,note,))
+        # end if
     # end if
 # end def
 
-def AgruparItems(lista, titles, encoding):
+def AgruparItems(lista, titles, encoding, reverse):
     def cmpItems(x,y):
         if ('modified_parsed' in x.original.keys()) and (x.original['modified_parsed']):
             aux = x.original['modified_parsed']
@@ -1181,6 +1216,8 @@ def AgruparItems(lista, titles, encoding):
     # end def    
 
     lista.sort (cmpItems)
+    if reverse:
+        lista.reverse()
 
     template1 = """
 <font face="Arial,Helvetica,Geneva">
@@ -1489,7 +1526,7 @@ class FeedWorker (_threading.Thread):
 
                 if (len(items) >= 1) and (feed['digest'] == '1'):
                     lista_vieja = items[:]
-                    items = [AgruparItems(lista_vieja, feed['titles'] == '1', config['encoding']),]
+                    items = [AgruparItems(lista_vieja, feed['titles'] == '1', config['encoding'], config['reverse'] == '1')]
                 # end if
 
                 email_ok = True
@@ -1504,20 +1541,10 @@ class FeedWorker (_threading.Thread):
                 encoding = config['encoding']
                 include_threading = config['threading'] == '1'
                 subject_prefix = config['subject']
-                    
-                if config['send_immediate'] == '1':
-                    try:
-                        emails = [item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix, config['from_address']) for item in items]
-                        EnviarEmails (emails, config['smtp_server'], config['smtp_auth'] == '1',config['smtp_user'],config['smtp_pass'])
-                    except Exception, e:
-                        email_ok = False
-                        mylog.exception ('Error enviando los emails: %s' % (str(e),))
-                    # end try
-                else:
-                    for item in items:
-                        self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix, config['from_address']))
-                    # end for
-                # end if
+
+                for item in items:
+                    self.email_queue.put(item.GetEmail(envio, email_destino, format, encoding, include_threading, subject_prefix, config['from_address']))
+                # end for
 
                 # second pass for mobile copy, provided we could send the first one
                 if( (feed['mobile'] == '1' ) and movil_destino and email_ok ):
@@ -1533,20 +1560,9 @@ class FeedWorker (_threading.Thread):
                             mylog.error ('Error parsing the time range "%s" in the feed %s' % (time, url))
                     
                     if send:
-                        if config['send_immediate'] == '1':
-                            try:
-                                emails = [item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix, config['from_address']) for item in items]
-                                EnviarEmails (emails, config['smtp_server'], config['smtp_auth'] == '1',config['smtp_user'],config['smtp_pass'])
-
-                            except Exception, e:
-                                email_ok = False
-                                mylog.exception ('Error enviando los emails: %s' % (str(e),))
-                            # end try
-                        else:
-                            for item in items:
-                                self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix))
-                            # end for
-                        # end if
+                        for item in items:
+                            self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix))
+                        # end for
                     # end if
                 # end if
 
@@ -1729,7 +1745,7 @@ def MainLoop():
                     # end while
 
                     try:
-                        EnviarEmails (emails, config['smtp_server'], config['smtp_auth'] == '1',config['smtp_user'],config['smtp_pass'])
+                        EnviarEmails (emails, config['send_method'], config['smtp_server'], config['smtp_auth'] == '1',config['smtp_user'],config['smtp_pass'], config['procmail'], config['reverse'] == '1')
                     except KeyboardInterrupt:
                         raise
                     except Exception, e:
