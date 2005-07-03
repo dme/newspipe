@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.61 $"
+__revision__ = "$Revision: 1.62 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.9"
 __date__ = "2005-07-03"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.61 2005/07/03 21:38:45 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.62 2005/07/03 22:00:51 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -776,6 +776,11 @@ class Item:
 
         self.original = original
         self.link = GetValue(original.get('link', channel.htmlUrl))
+        if original.has_key('enclosures'):
+            self.enclosures = original.enclosures
+        else:
+            self.enclosures = ()
+        # end if
 
         self.texto_nuevo = ''
         self.text_key = 'None'
@@ -905,6 +910,8 @@ class Item:
         <a href="__htmlUrl__">Home</a>
         &nbsp;&nbsp;&nbsp;
         <a href="__permalink__">Link</a>
+        &nbsp;&nbsp;&nbsp;
+        __enclosure__
     </p>
 </font>
 """
@@ -912,12 +919,28 @@ class Item:
         self.texto = expandNumEntities(self.texto)
         body = self.texto
         text_version = getPlainText (body)
-        text_version = text_version + "\n\n" + "Home: [" + self.channel.htmlUrl + "]\n" + "Link: [" + self.link + "]\n";
+        text_version = text_version + "\n\n" + "Home: [" + self.channel.htmlUrl + "]\n" + "Link: [" + self.link + "]\n"
+        
+        if self.enclosures:
+            for enclosure in self.enclosures:
+                text_version = text_version + "Enclosure: [" + enclosure.get('url') + "(" + enclosure.get('length') + ")]\n"
+            # end for
+        # end if
 
         html_version = template
+        html_version = html_version.replace('__subject__', self.subject)
         html_version = html_version.replace('__body__', body)
         html_version = html_version.replace('__permalink__', self.link)
         html_version = html_version.replace('__htmlUrl__', self.channel.htmlUrl)
+        
+        enclosure_text = ""
+        if self.enclosures:
+            for enclosure in self.enclosures:
+                enclosure_text = enclosure_text + "E: <a href=\"" + enclosure.get('url') + "\">" + enclosure.get('url') + "</a> (" + enclosure.get('length') + ")<br>"
+            # end for
+        #ed if
+                
+        html_version = html_version.replace('__enclosure__', enclosure_text)
         
         img_search_re = re.compile('<.*?img.+?src.*?=.*?[\'"](.*?)[\'"]', re.IGNORECASE)
         
@@ -1179,9 +1202,13 @@ def EnviarEmails(msgs, method, server, auth, auth_user, auth_pass, procmail, rev
         if method.lower() in ('procmail', 'both'):
             count = 0
             for msg in msgs:
-                fp = os.popen(procmail, 'w')
-                fp.write(msg.as_string(unixfrom=False))
-                status = fp.close()
+                try:
+                    fp = os.popen(procmail, 'w')
+                    fp.write(msg.as_string(unixfrom=False))
+                    status = fp.close()
+                except IOError:
+                    mylog.error ('IOError executing '+procmail)
+                    status = 1
                 
                 if status is None:
                     count += 1
@@ -1410,7 +1437,7 @@ class FeedWorker (_threading.Thread):
 
     def run(self):
         config = self.config
-        email_destino = self.email_destino
+        _email_destino = self.email_destino
         movil_destino = self.movil_destino
         semaforo = self.semaforo
 
@@ -1459,6 +1486,16 @@ class FeedWorker (_threading.Thread):
                 title = feed.get('title', feed.get('text', url))
                 mylog.debug ('Processing '+title)
 
+                email = feed.get('ownerEmail', None)
+                if email:
+                    #mylog.debug ('email[0]=' + _email_destino[0] + ', email[1]=' + _email_destino[1])
+                    #mylog.debug ('Overriding email: ' +email)
+                    email_destino = _email_destino[0], email
+                else:
+                    email_destino = _email_destino
+                # end if
+
+
                 auth = feed.get('auth', None)
                 if auth:
                     if ':' in auth:
@@ -1493,6 +1530,9 @@ class FeedWorker (_threading.Thread):
                     for elemento in xml['items']:
                         item = channel.NewItem(elemento, xml["encoding"], feed['remove'])
                         
+#                         for k in item.keys():
+#                             mylog.debug('Key: ' + str(k))
+
                         if historico_posts.has_key(item.urlHash):
                             historico_posts[item.urlHash]['timestamp'] = datetime.now()
                             historico_posts['modified'] = True
