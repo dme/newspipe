@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.62 $"
+__revision__ = "$Revision: 1.63 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.9"
 __date__ = "2005-07-03"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.62 2005/07/03 22:00:51 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.63 2005/07/04 02:56:06 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -1204,7 +1204,7 @@ def EnviarEmails(msgs, method, server, auth, auth_user, auth_pass, procmail, rev
             for msg in msgs:
                 try:
                     fp = os.popen(procmail, 'w')
-                    fp.write(msg.as_string(unixfrom=False))
+                    fp.write(msg.as_string(unixfrom=True))
                     status = fp.close()
                 except IOError:
                     mylog.error ('IOError executing '+procmail)
