@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.63 $"
+__revision__ = "$Revision: 1.64 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.9"
 __date__ = "2005-07-03"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.63 2005/07/04 02:56:06 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.64 2005/07/05 01:50:06 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -265,6 +265,14 @@ def checkTime (range):
     result = begin <= current <= end
     
     return result
+
+def formatNumber (text):
+    i = float(text)
+    m = i/(1024*1024)
+
+    if m < 0.01 and m > 0:
+        m = 0.01
+    return '%0.2f MB' % m
 
 
 def intEnt(m):
@@ -709,6 +717,9 @@ semaforo_html2text = _threading.BoundedSemaphore()
 
 
 def makeHeader(text):
+    if not text:
+        text = ''
+    
     if not isinstance(text, unicode):
         text = text.decode('latin1')
     # end if
@@ -919,11 +930,11 @@ class Item:
         self.texto = expandNumEntities(self.texto)
         body = self.texto
         text_version = getPlainText (body)
-        text_version = text_version + "\n\n" + "Home: [" + self.channel.htmlUrl + "]\n" + "Link: [" + self.link + "]\n"
+        text_version = text_version + "\n\n" + "Home: [" + self.channel.htmlUrl + "]\n" + "Link: [ " + self.link + " ]\n"
         
         if self.enclosures:
             for enclosure in self.enclosures:
-                text_version = text_version + "Enclosure: [" + enclosure.get('url') + "(" + enclosure.get('length') + ")]\n"
+                text_version = text_version + "Enclosure: [ " + enclosure.get('url') + "  (" + formatNumber(enclosure.get('length', '0')) + ") ]\n"
             # end for
         # end if
 
@@ -936,7 +947,7 @@ class Item:
         enclosure_text = ""
         if self.enclosures:
             for enclosure in self.enclosures:
-                enclosure_text = enclosure_text + "E: <a href=\"" + enclosure.get('url') + "\">" + enclosure.get('url') + "</a> (" + enclosure.get('length') + ")<br>"
+                enclosure_text = enclosure_text + "<a href=\"" + enclosure.get('url') + "\"> Enclosure (" + formatNumber(enclosure.get('length', '0')) + ")</a>&nbsp;&nbsp;&nbsp;"
             # end for
         #ed if
                 
@@ -1265,6 +1276,7 @@ def AgruparItems(lista, titles, encoding, reverse):
     <p>
         __body__
     </p>
+    __enclosure__
 </font>
 <br clear=all />
 <hr />
@@ -1293,6 +1305,15 @@ def AgruparItems(lista, titles, encoding, reverse):
         html_version = html_version.replace('__creator__', '<a href="mailto:%s">%s</a>' % (item.creatorEmail, item.creatorName))
         html_version = html_version.replace('__timestamp__', item.timestamp.strftime("%a, %d %b %Y %H:%M:%S +0000"))
 
+        enclosure_text = ""
+        if item.enclosures:
+            for enclosure in item.enclosures:
+                enclosure_text = enclosure_text + "<a href=\"" + enclosure.get('url') + "\"> Enclosure (" + formatNumber(enclosure.get('length', '0')) + ")</a>&nbsp;&nbsp;&nbsp;"
+            # end for
+        #ed if
+                
+        html_version = html_version.replace('__enclosure__', '<p>'+enclosure_text+'</p>')
+        
         texto += html_version
     # end for
     dicc = {}
