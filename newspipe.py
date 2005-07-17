@@ -2,14 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.64 $"
+__revision__ = "$Revision: 1.65 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.9"
 __date__ = "2005-07-03"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.64 2005/07/05 01:50:06 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.65 2005/07/17 23:32:49 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
@@ -878,7 +878,7 @@ class Item:
             if self.texto <> before_diff:
                 self.timestamp = datetime.now()
         # end if
-
+        
         self.channel = channel
 
         self.creatorName = GetValue(original.get('creator', original.get('author', channel.creator)))
@@ -926,8 +926,8 @@ class Item:
     </p>
 </font>
 """
+        #self.texto = expandNumEntities(self.texto)
 
-        self.texto = expandNumEntities(self.texto)
         body = self.texto
         text_version = getPlainText (body)
         text_version = text_version + "\n\n" + "Home: [" + self.channel.htmlUrl + "]\n" + "Link: [ " + self.link + " ]\n"
