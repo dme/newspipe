@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta name="version" value="$Id: manual.html,v 1.30 2005/04/07 03:38:02 reyesric Exp $">
+<meta name="version" value="$Id: manual.html,v 1.31 2005/07/18 00:23:28 reyesric Exp $">
 <style>
 BODY { font-family: Arial, Helvetica, sans serif; }
 
@@ -204,16 +204,6 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td>Number of threads to use simultaneusly. Bigger numbers should mean better performance, but with increased memory and CPU use.<br>Dialup users may want to change this to 3, since more threads may also mean more timeout errors for them.</td>
   </tr>
   <tr class="odd">
-    <td class="fixed">send_immediate</td>
-    <td>0</td>
-    <td>If set to 1, <tt>Newspipe</tt> will send all messages as they are parsed instead of in a single long SMTP transaction at the end of its run. Useful to avoiding choking your SMTP server with a lot of messages at once.</td>
-  </tr>
-    <tr>
-    <td class="fixed">multipart</td>
-    <td>on</td>
-    <td>If set to <tt>on</tt>, <tt>Newspipe</tt> will include a plaintext version of item contents as well as an HTML version.<p>Setting this to <tt>off</tt> sends <i>only</i> HTML and images, and might be desirable if you want to receive slightly smaller messages - or if you use a mailer/webmail that has trouble with alternative versions of the same message (<a href="http://www.gmail.com">Gmail</a>, for instance, defaults to showing plaintext versions of messages).</td>
-  </tr>
-  <tr class="odd">
     <td class="fixed">can_pipe</td>
     <td>0</td>
     <td><p>Enables <tt>pipe://</tt> URI support. When set to "1", the program will accept feed URLs that start with <tt>pipe://</tt> - an arbitrary protocol name used to tell <tt>Newspipe</tt> that to get the feed data, it should run the program or command after the <tt>pipe://</tt> and use its standard output as feed data.</p>
@@ -258,6 +248,32 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
     <td class="fixed">smtp_pass</td>
     <td>None</td>
     <td><p> If <tt>smtp_auth</tt> is set to "1", the value of this setting will be used as the password when connecting to the smtp server </p></td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">multipart</td>
+    <td>on</td>
+    <td>If set to <tt>on</tt>, <tt>Newspipe</tt> will include a plaintext version of item contents as well as an HTML version.<p>Setting this to <tt>off</tt> sends <i>only</i> HTML and images, and might be desirable if you want to receive slightly smaller messages - or if you use a mailer/webmail that has trouble with alternative versions of the same message (<a href="http://www.gmail.com">Gmail</a>, for instance, defaults to showing plaintext versions of messages).</td>
+  </tr>
+  <tr>
+    <td class="fixed">reverse</td>
+    <td>0</td>
+    <td><p> If set to "1", <tt>Newspipe</tt> sends the emails in reversed order</p></td>
+  </tr>
+  <tr class="odd">
+    <td class="fixed">send_method</td>
+    <td>SMTP</td>
+    <td><p> Determines the method that <tt>Newspipe</tt> will use to send the emails. Possible values:
+        <ul>
+            <li> SMTP: Send the emails via an SMTP server </li>
+            <li> PROCMAIL: Invoke a PROCMAIL script or program for each email, sending the email's text through it's standard input </li>
+            <li> BOTH: Combines the two previous options, sending each email trough the smtp server and the procmail script </li>
+        </ul>
+    </p></td>
+  </tr>
+  <tr>
+    <td class="fixed">procmail</td>
+    <td>None</td>
+    <td><p> Full path to a procmail script that will be invoqued for each email when <tt>SEND_METHOD</tt> is <tt>PROCMAIL</tt> or <tt>BOTH</tt> </p></td>
   </tr>
 </table>
  
@@ -411,6 +427,11 @@ TT, .fixed { font-family: Courier New, Courier, fixed; }
         to remove adds from Boing Boing (and probably from other "feedburner enhaced" feeds)
     </td>
   </tr>
+  <tr class="odd">
+    <td class="fixed">owneremail</td>
+    <td>None</td>
+    <td>With this attribute you can override the OPML's OwnerEmail value.</td>
+  </tr>
 </table>
 
 <p>
@@ -534,8 +555,11 @@ you want to filter or process them in some way with your mail client.
 <li><a href="http://www.diveintomark.org/">Mark Pilgrim</a>, author of <tt>feedparser.py</tt> (<a href="http://www.feedparser.org/">download feedparser.py</a>)</li> 
 <li>
     <a href="http://www.aaronsw.com/">Aaron Swartz</a>, author of <tt>html2text.py</tt> (<a href="http://www.aaronsw.com/2002/html2text">download html2text.py</a>)</p>
-    <p> Aaron has program similar to <tt>Newspipe</tt> called <a href="http://www.aaronsw.com/2002/rss2email/">rss2email</a>. I've never tried it myself, but you should give it a try if you have problems with <tt>Newspipe</tt>. Oddly enough, I found out about it AFTER using <tt>html2text.py</tt> for several months in <tt>Rss2pop3</tt> (the predecessor of <tt>Newspipe</tt>). </p>
+    <p> Aaron has program similar to <tt>Newspipe</tt> called <a href="http://www.aaronsw.com/2002/rss2email/">rss2email</a>. I've never tried it myself, but you should give it a try if you are interested in this "RSS to Email thing". Oddly enough, I found out about it AFTER using <tt>html2text.py</tt> for several months in <tt>Rss2pop3</tt> (the predecessor of <tt>Newspipe</tt>). </p>
 </li>
+<li><a href="http://www.rupa.com/">Rupa Schomaker</a>, for a couple of patches and comments.</li>
+<li><tt>Lwiechec</tt> (real name unknown) for the SMTP authentication patch</li>
+<li><tt>David Malkovsky</tt> for the Proxy support code</li>
 <li>Newspaper image from <a href="http://freetubes.com/">Free Tubes</a>, used with permission.</li>
 </ul>
 
@@ -558,6 +582,23 @@ you want to filter or process them in some way with your mail client.
 <H2>Changelog</H2>
 
 <ul>
+    <li class="release"> v1.1.9 &nbsp; 17-July-2005
+        <ul class="release_text">
+            <li> - Eliminated the option --send_immediate because of concurrency problems </li>
+            <li> + New .ini parameter SEND_METHOD: possible values SMTP, PROCMAIL, BOTH</li>
+            <li> + New .ini parameter PROCMAIL: path to a procmail script that will be invoqued for each email when SEND_METHOD is PROCMAIL or BOTH</li>
+            <li> + New .ini parameter REVERSE: possible values 0 or 1. When set to 1, Newspipe sends the emails in reverse order.</li>
+            <li> + Applied to patches from <b>Rupa Schomaker</b>:
+                <ul>
+                  <li> + Support overriding ownerEmail on a per-outline basis (with a new OPML parameter OWNEREMAIL)</li>
+                  <li> + Support including the link for an enclosure tag on each email</li>
+                </ul>
+            </li>
+            <li> * Fixed a bug related to accented chars in the HomeDir path</li>
+            <li> * Fixed bug on feeds without description</li>
+            <li> * Fixed bug on feeds with &amp;lt; and &amp;rt; entities in the item text</li>
+        </ul>
+    </li>
     <li class="release"> v1.1.8 &nbsp; 06-April-2005
         <ul class="release_text">
             <li> New opml attribute "remove". The value should be a regular expression, and Newspipe will eliminate any text that matches that regular expression from the feeds text. Usefull to remove ads from feeds</li>
