@@ -1,199 +1,90 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-</head>
-<body>
 <h1>WebPipe</h1>
-<p><code>webpipe</code>
-is a companion web front-end for <a href="http://newspipe.sf.net">newspipe</a>
-that allows you to keep track of read news items, flag items for
-follow-up and generate a &ldquo;metafeed&rdquo; of all your
-news that you can view on a PDA or on any web browser.</p>
-<p>It was designed to run on
-pretty much any web server running a stock install of PHP (requiring
-nothing more than the IMAP extension), under any sort of user account,
-and in close relationship to <a href="http://newspipe.sf.net">newspipe</a>
-(it takes a few shortcuts to parse and display <a
- href="http://newspipe.sf.net">newspipe</a>&rsquo;s
-specific MIME format).</p>
-<hr>
-<h2>Changelog:</h2>
-<ul>
-  <li>2005-12-01: <br>
-  </li>
-  <ul>
-    <li>Another overhaul of the
-authentication mechanism to deal with PlayStation Portable
-authentication bugs (we now use PHP sessions and a single
-authentication request).<br>
-    </li>
-    <li>Removed requirement for
-PATH_INFO (arguments are now sent as part of a standard query string).</li>
-  </ul>
-  <li>2005-09-20:</li>
-  <ul>
-    <li>Added&nbsp; <span style="font-family: monospace;">$gaProfileOverrides</span>
-to disable rotation and set image sizes for specific user-agents (see <span
- style="font-family: monospace;">config.php.sample</span>
-for an example)</li>
-    <li>Added metatags for RSS feed.</li>
-  </ul>
-  <li>2005-05-12:</li>
-  <ul>
-    <li>Major overhaul of
-authentication mechanism to deal with Blackberry bugs and allow for
-more flexible ACL specification. You can now allow unauthenticated
-access to some user-agents, IP addresses, etc.<br>
-    </li>
-    <li>Several other tweaks.
-Default installation now logs all authentication steps.</li>
-  </ul>
-</ul>
-<hr>
+
+<p><code>webpipe</code> is a companion web front-end for <a href="http://newspipe.sf.net">newspipe</a> that allows you to keep track of read news items, flag items for follow-up and generate a &#8220;metafeed&#8221; of all your news that you can view on a PDA or on any web browser.</p>
+
+<p>It was designed to run on pretty much any web server running a stock install of PHP (requiring nothing more than the IMAP extension), under any sort of user account, and in close relationship to <a href="http://newspipe.sf.net">newspipe</a> (it takes a few shortcuts to parse and display <a href="http://newspipe.sf.net">newspipe</a>&#8217;s specific MIME format).</p>
+
+<hr />
+
 <h2>Requirements</h2>
+
 <p>You need:</p>
+
 <ul>
-  <li>PHP (4.3.4 or above) with
-IMAP support compiled in - see <a
- href="http://www.entropy.ch/software/macosx/php/">Entropy</a>
-if you want to run this on a Mac.</li>
-  <li>A working installation of <a href="http://newspipe.sf.net">newspipe</a>.
-You do want something to read, right?</li>
-  <li>A fast network link to your
-IMAP server (remember that <code>webpipe</code>
-will be fetching messages on the fly).</li>
+<li>PHP (4.3.4 or above, see <a href="http://www.entropy.ch/software/macosx/php/">Entropy</a> if you want to run this on a Mac) with IMAP support compiled in.</li>
+<li>A working knowledge of how to protect this script using HTTP authentication (.htaccess or similar), since <code>webpipe</code> DOES NOT DO AUTHENTICATION - it relies on your web server (preferably <a href="http://httpd.apache.org/docs-2.0/mod/core.html#require">Apache</a> do do it.</li>
+<li>A working installation of <a href="http://newspipe.sf.net">newspipe</a>. You do want something to read, right?</li>
+<li>Quick access to your IMAP server (remember that <code>webpipe</code> will be fetching messages on the fly).</li>
 </ul>
+
 <h2>Configuration</h2>
+
 <ul>
-  <li>Place all the PHP files
-where your Web server can process them.</li>
-  <li>Make sure that your Web
-server can write to a file called <span style="font-family: monospace;">devices.dat</span>
-in<span style="font-family: monospace;"></span><span
- style="font-family: monospace;"></span>
-    <span style="font-family: monospace;">/tmp</span>
-(that's where WAP device profiles are summarized and stored).<br>
-  </li>
-  <li>Open <code>config.php.sample</code>
-and edit it to your liking, saving it as <code>config.php</code>.
-    <ul>
-      <li>Since the IMAP password
-has to be stored in clear text, it is STRONGLY RECOMMENDED to put <code>config.php</code>
-outside the web root and change <code>main.php</code>
-accordingly (that&rsquo;s why it&rsquo;s separate from <code>main.php</code>).</li>
-      <li>You can change the
-folder webpipe reads from by modifying the <code>MAILBOX</code>
-variable. See the <a
- href="http://www.php.net/manual/en/function.imap-open.php">imap_open</a>
-documentation for details.</li>
-      <li>As a fail-safe, <code>webpipe</code>
-does NOT delete messages. It does, however, move them to the <code>Trash</code>
-folder or to another folder of your own choosing. Check if that folder
-exists and matches what is defined in <code>config.php</code>.</li>
-    </ul>
-  </li>
-  <li>
-    <p>Modify the usernames in <code>config.php</code>
-to ones of your own liking - at the very least, create a new password
-using <span style="font-family: monospace;">echo
--n "your new password" | md5sum</span><code></code>
-(use <code>md5</code>
-if you're on a Mac).&nbsp;</p>
-  </li>
+<li>Place all the PHP files where your Web server can process them.</li>
+<li>Open <code>config.php.sample</code> and edit it to your liking, saving it as <code>config.php</code>.
+<ul>
+<li>Since the IMAP password has to be stored in clear text, it is STRONGLY RECOMMENDED to put <code>config.php</code> outside the web root and change <code>main.php</code> accordingly (that&#8217;s why it&#8217;s separate from <code>main.php</code>).</li>
+<li>You can change the folder webpipe reads from by modifying the <code>MAILBOX</code> variable. See the <a href="http://www.php.net/manual/en/function.imap-open.php">imap_open</a> documentation for details.</li>
+<li>As a fail-safe, <code>webpipe</code> does NOT delete messages. It does, however, move them to the <code>Trash</code> folder or to another folder of your own choosing. Check if that folder exists and matches what is defined in <code>config.php</code>.</li>
+</ul></li>
+
+<li><p>Finally, protect your <code>webpipe</code> install with an username and password. Again, check the <a href="http://httpd.apache.org/docs-2.0/mod/core.html#require">Apache</a> documentation for this.</p></li>
 </ul>
-<hr>
+
+<hr />
+
 <h2>FAQ</h2>
+
 <ul>
-  <li>What&rsquo;s the point
-of accessing your IMAP store to read RSS feeds? Isn&rsquo;t
-straight e-mail/MMS enough with <a href="http://newspipe.sf.net">newspipe</a>?</li>
-  <dt>
-    <p>Actually, no.
-Let&rsquo;s
-say you&rsquo;re out with your PDA and want to keep up with the
-news, but only have Web access. Using <code>webpipe</code>,
-you can quickly check your latest newspipe items, flag messages for
-follow-up and delete the ones you&rsquo;re not interested in.
-    </p>
-  </dt>
-  <li><code>webpipe</code>
-won&rsquo;t display regular mail!</li>
-  <dt>
-    <p>Of course not. <code>webpipe</code>
-is a very simple IMAP-to-web shim that only understands <a
- href="http://newspipe.sf.net">newspipe</a>&rsquo;s
-simple MIME structure.</p>
-  </dt>
-  <li>Is there a WAP version?</li>
-  <dt>
-    <p>No, and there isn't likely to be a "pure" WML version from me.
-The templates and
-code were kept simple enough so that a WAP version can be put together
-with
-minimal fuss (provided someone codes the required encoding and content
-paging logic). The original version of <code>webpipe</code>
-used XSLT transforms with an intent to accomplish that, but I
-couldn&rsquo;t be bothered to maintain it when just about every
-mobile browser out there now supports XHTML in some fashion.<br>
-    </p>
-  </dt>
-  <li>Can I use it with a POP
-account?</li>
-  <dt>
-    <p>Most likely not.
-PHP&rsquo;s <a
- href="http://www.php.net/manual/en/function.imap-open.php">imap_open</a>
-supports POP3, but some of the operations won't be supported by the POP
-server.</p>
-  </dt>
-  <li>What devices has <code>webpipe</code>
-been tested with?</li>
-  <dt>
-    <p>Here's an incomplete list:</p>
-    <ul>
-      <li>Playstation Portable
-(firmware versions 2.0 to 2.6)<br>
-      </li>
-      <li><a href="http://mini.opera.com">Opera Mini</a><br>
-      </li>
-      <li>SonyEricsson EMP phones:
-K700,Z1010,V800i,V600i,K600i,K750i,W800i, etc.</li>
-      <li>SonyEricsson P910,P990</li>
-      <li>Nokia 770 (tablet)</li>
-      <li>Nokia Series 60 phones:
-6600,6630,6680,N70,E60,E61(normal and BrowserNG)</li>
-      <li>Nokia Series 80 phones:
-9300,9300i,9500</li>
-      <li>RIM Blackberry
-7230,7290,7100v,Electron</li>
-      <li>Pocket PC (works with
-any
-version, although there are occasional issues with UTF-8)</li>
-      <li>Palm Tungsten T3
-(previous
-version worked with WebPro, should work fine with Blazer)</li>
-      <li>Several set-top boxes with basic HTML browsers</li>
-    </ul>
-  </dt>
+<li>What&#8217;s the point of accessing your IMAP store to read RSS feeds? Isn&#8217;t straight e-mail/MMS enough with <a href="http://newspipe.sf.net">newspipe</a>?</li>
 </ul>
-<hr>
+
+<p>Actually, no. Let&#8217;s say you&#8217;re out with your PDA and want to keep up with the news, but only have Web access. Using <code>webpipe</code>, you can quickly check your latest newspipe items, flag messages for follow-up and delete the ones you&#8217;re not interested in. </p>
+
+<ul>
+<li><code>webpipe</code> won&#8217;t display regular mail!</li>
+</ul>
+
+<p>Of course not. <code>webpipe</code> is a very simple IMAP-to-web shim that only understands <a href="http://newspipe.sf.net">newspipe</a>&#8217;s simple MIME structure.</p>
+
+<ul>
+<li>Is there a WAP version?</li>
+</ul>
+
+<p>Not yet. The templates and code were kept simple enough so that a WAP version can be put together with minimal fuss (provided someone codes the required encoding and content paging logic). The original version of <code>webpipe</code> used XSLT transforms with an intent to accomplish that, but I couldn&#8217;t be bothered.</p>
+
+<ul>
+<li>Can I use it with a POP account?</li>
+</ul>
+
+<p>Most likely not. PHP&#8217;s <a href="http://www.php.net/manual/en/function.imap-open.php">imap_open</a> supports POP3, but some of the operations (deleting, )</p>
+
+<ul>
+<li>Why <code>PATH_INFO</code>?</li>
+</ul>
+
+<p>Well, because the URLs are simpler and mostly because my Blackberry would choke on multi-parameter GETs for some reason. This way it doesn&#8217;t have to understand what it&#8217;s doing.</p>
+
+<ul>
+<li>What PDAs has <code>webpipe</code> been tested with?</li>
+</ul>
+
+<p>One of each, basically:</p>
+
+<ul>
+<li>RIM Blackberry 7230</li>
+<li>RIM Blackberry 7100v</li>
+<li>Pocket PC (works with any version, although there are occasional issues with UTF-8)</li>
+<li>Palm Tungsten T3 (previous version worked with WebPro, should work fine with Blazer)</li>
+</ul>
+
+<hr />
+
 <h2>Contact</h2>
-<p>Please bear in mind that THIS
-IS NOT PART OF NEWSPIPE. It is only a humble contribution. As such,
-please direct any gripes, bug reports, etc. directly to <a
- href="http://the.taoofmac.com/space/RuiCarmo">me</a>
-(you&rsquo;ll find the e-mail address on that page).</p>
+
+<p>Please bear in mind that THIS IS NOT PART OF NEWSPIPE. It is only a humble contribution. As such, please direct any gripes, bug reports, etc. directly to <a href="http://the.taoofmac.com/space/RuiCarmo">me</a> (you&#8217;ll find the e-mail address on that page).</p>
+
 <h2>Acknowledgements</h2>
-<ul>
-  <li><code>webpipe</code>
-wouldn&rsquo;t have sprung into life without Ricardo M.
-Reyes&rsquo; <a href="http://newspipe.sf.net">newspipe</a>.</li>
-  <li>
-    <a href="http://www.litux.org">Bruno
-David</a> changed <a href="http://newspipe.sf.net">newspipe</a>&rsquo;s
-MIME structure to what it is today.</li>
-  <li><a href="http://www.simplicidade.org/notes">Pedro Melo</a>
-volunteered his Playstation Portable for testing.</li>
-</ul>
-</body>
-</html>
+
+<p><code>webpipe</code> wouldn&#8217;t have sprung into life without Ricardo M. Reyes&#8217; <a href="http://newspipe.sf.net">newspipe</a>. <a href="http://www.litux.org">Bruno David</a> changed <a href="http://newspipe.sf.net">newspipe</a>&#8217;s MIME structure to what it is today.</p>
+
