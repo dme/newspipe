@@ -1,6 +1,6 @@
 <script language="php">
 // ======================================================================
-// $Id: lib.php,v 1.7 2005/12/01 13:52:27 rcarmo Exp $
+// $Id: lib.php,v 1.8 2005/12/01 14:05:34 rcarmo Exp $
 // IMAP Wrapper (non-XSLT version)
 // ======================================================================
 
@@ -20,7 +20,7 @@ define( 'ANSI_MAGENTA',  "\033[35m" );
 define( 'ANSI_CYAN',     "\033[36m" );
 define( 'ANSI_WHITE',    "\033[37m" );
 define( 'LOGIN_COOKIE', "loginattempts" );
-define( 'DEVICE_PROFILE_DB', "/tmp/devices.dat" );
+define( 'DEVICE_PROFILE_DB', "devices.dat" );
 // }}} 
 
 // globals {{{
@@ -207,7 +207,7 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
           $aValues = $this->getValues( $oMessage );
           $aValues["row_class"] = $nIndex % 2 ? "odd" : "even";
           $aMsg = $this->getMessage( $oMessage->uid, FT_UID | FT_PEEK );
-          $aValues["body"] = htmlspecialchars(str_replace('src="', 'src="http://no-bolso.com/wap/feeds/body.php/' . $oMessage->uid . "/view/", $aMsg["body"]));
+          $aValues["body"] = htmlspecialchars(str_replace('src="', 'src="' . assembleURL($oMessage->uid ) . "&param=", $aMsg["body"]));
           $szBuffer .= $this->replaceValues($aValues);
           if( $nIndex > $nBound ) // limit listing length
             return $szBuffer;
