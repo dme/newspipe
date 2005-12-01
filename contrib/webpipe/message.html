@@ -2,14 +2,29 @@
 <head>
 <title>$subject</title>
 <link href="$url/plain.css" rel="stylesheet">
+<script>
+function pageScroll() {
+        window.scrollBy(0,2); // horizontal and vertical scroll increments
+        setTimeout('pageScroll()',200); // scrolls every 100 milliseconds
+}
+function stopScroll() {
+        clearTimeout(scrolldelay);
+}
+</script>
 </head>
 <body>
 <h1>$subject</h1>
-<a href="../../../action.php/$uid/flag/$flag"><img src="../../../$flag_icon" alt="$flag_alt"></a>
-<a href="../../../action.php/$uid/unread/$read"><img src="../../../$read_icon" alt="$read_alt"></a>
-<a href="../../../action.php/$uid/delete"><img src="../../../$delete_icon" alt="$delete_alt"></a>
+<a href="action.php?uid=$uid&action=flag&param=$flag"><img width="$iconsize" height="$iconsize" src="$flag_icon" alt="$flag_alt"></a>
+<a href="action.php?uid=$uid&action=unread&param=$read"><img width="$iconsize" height="$iconsize" src="$read_icon" alt="$read_alt"></a>
+<a href="action.php?uid=$uid&action=delete"><img width="$iconsize" height="$iconsize" src="$delete_icon" alt="$delete_alt"></a>
+<a href="index.php"><img width="$iconsize" height="$iconsize" src="dot.gif" alt="Home"></a>
 from $from on $shortdate
 <hr>
 $body
+<br>
+<a href="action.php?uid=$uid&action=flag&param=$flag"><img width="$iconsize" height="$iconsize" src="$flag_icon" alt="$flag_alt"></a>
+<a href="action.php?uid=$uid&action=unread&param=$read"><img width="$iconsize" height="$iconsize" src="$read_icon" alt="$read_alt"></a>
+<a href="action.php?uid=$uid&action=delete"><img width="$iconsize" height="$iconsize" src="$delete_icon" alt="$delete_alt"></a>
+<a href="index.php"><img width="$iconsize" height="$iconsize" src="dot.gif" alt="Home"></a>
 </body>
 </html>

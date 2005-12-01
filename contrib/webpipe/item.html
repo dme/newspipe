@@ -1,7 +1,3 @@
-<tr class="$row_class">
-<td><a href="action.php/$uid/flag/$flag"><img src="$flag_icon" alt="$flag_alt"></a></td>
-<td><a href="action.php/$uid/unread/$read"><img src="$read_icon" alt="$read_alt"></a></td>
-<td><a href="action.php/$uid/delete"><img src="$delete_icon" alt="$delete_alt"></a></td>
-<td><a href="body.php/$uid/view/">$format_open$subject$format_close</a></td>
-<td  align="right">$shortdate</td>
-</tr>
+<div class="$row_class">
+<a href="action.php?uid=$uid&action=flag&param=$flag"><img width="$iconsize" height="$iconsize" src="$flag_icon" alt="$flag_alt"></a><a href="action.php?uid=$uid&action=unread&param=$read"><img width="$iconsize" height="$iconsize" src="$read_icon" alt="$read_alt"></a><a href="action.php?uid=$uid&action=delete"><img width="$iconsize" height="$iconsize" src="$delete_icon" alt="$delete_alt"></a> <a href="body.php?uid=$uid&action=view">$format_open$subject$format_close</a> $shortdate
+</div>

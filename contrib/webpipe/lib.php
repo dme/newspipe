@@ -1,25 +1,7 @@
 <script language="php">
 // ======================================================================
-// $Id: lib.php,v 1.6 2004/11/07 14:00:31 rcarmo Exp $
-//
-// WebPipe main library file
-//
-// Copyright (C) 2004 Rui Carmo, http://the.taoofmac.com
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or 
-// (at your option) any later version.
-//    
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//    
-//  You should have received a copy of the GNU General Public License
-//  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-//
+// $Id: lib.php,v 1.7 2005/12/01 13:52:27 rcarmo Exp $
+// IMAP Wrapper (non-XSLT version)
 // ======================================================================
 
 // constants {{{
@@ -27,7 +9,7 @@ define( 'FAULT_SYSLOG',  0 );
 define( 'FAULT_EMAIL',   1 );
 define( 'FAULT_FILELOG', 3 );
 define( 'ANSI_LOGS',     1 );
-define( 'LOG_LEVEL',     E_ERROR | E_WARNING ); 
+define( 'LOG_LEVEL',     'E_INFO' | 'E_ERROR' | 'E_PARSE' | 'E_NOTICE' | 'E_WARNING' );
 define( 'ANSI_NORMAL',   "\033[0m" );
 define( 'ANSI_BLACK',    "\033[30m" );
 define( 'ANSI_RED',      "\033[31m" );
@@ -38,6 +20,7 @@ define( 'ANSI_MAGENTA',  "\033[35m" );
 define( 'ANSI_CYAN',     "\033[36m" );
 define( 'ANSI_WHITE',    "\033[37m" );
 define( 'LOGIN_COOKIE', "loginattempts" );
+define( 'DEVICE_PROFILE_DB', "/tmp/devices.dat" );
 // }}} 
 
 // globals {{{
@@ -46,18 +29,21 @@ $gaIMAPEncodings = array( "7bit", "8bit", "binary", "base64", "quoted-printable"
 // }}}
 
 
-function assembleUrl() { // {{{ build a base URL with a valid port, etc.
+function assembleUrl( $szUid = "" ) { // {{{ build a base URL with a valid port, etc.
   $szServerName = $_SERVER["SERVER_NAME"];
   if( $_SERVER["SERVER_PORT"] == "443" ) {
-    return( "https://$szServerName" . SITE_ROOT );
+    $szUrl = "https://$szServerName" . SITE_ROOT;
   }
   if( $_SERVER["SERVER_PORT"] != "80" )
     $szServerName .= ":" . $_SERVER["SERVER_PORT"];
-  return ( "http://$szServerName" . SITE_ROOT );
+  $szUrl = "http://$szServerName" . SITE_ROOT;
+  if( $szUid )
+    $szUrl .= "/body.php?uid=$szUid&action=view";
+  return $szUrl;
 } // assembleUrl }}} 
 
-function redirect() { // {{{ redirect to the site root
-  header( "Location: " . assembleUrl() );
+function redirect( $szUid = "" ) { // {{{ redirect to the site root
+  header( "Location: " . assembleUrl( $szUid ) );
   exit;
 } // redirect }}}
 
@@ -99,10 +85,12 @@ class CTemplate { // {{{ generic text template class
 
 class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
   var $m_oMailbox;
+  var $m_oFolders;
 
   function CIMAPWrapper( $szMailbox, $szUsername, $szPassword ) { // {{{
     // No error handling (yet)
     $this->m_oMailbox = imap_open( $szMailbox, $szUsername, $szPassword );
+    $this->m_oFolders = imap_getmailboxes( $this->m_oMailbox, $szMailbox, "*" );
   } // }}}
 
   function timeSortHelper($a,$b) { // {{{ reverse sort by time
@@ -120,7 +108,11 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
     // Remember that we want to toggle some fields, so values are negated.
     $aValues = array();
     $aValues["uid"] = $oMessage->uid;
-    $aValues["subject"] = imap_utf8($oMessage->subject);
+    if( !preg_match( "/Windows CE; PPC; 240x320/i", $_SERVER["HTTP_USER_AGENT"]) )
+      $aValues["iconsize"] = 16;
+    else
+      $aValues["iconsize"] = 32;
+    $aValues["subject"] = htmlentities(imap_utf8($oMessage->subject));
     $aValues["format_open"] = $oMessage->seen ? "" : "<b>";
     $aValues["format_close"] = $oMessage->seen ? "" : "</b>";
     $aValues["read"] = $oMessage->seen ? "yes" : "no";
@@ -133,12 +125,70 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
     $aValues["flag_alt"] = $oMessage->flagged ? "[F]" : "[ ]";
     $aValues["from"] = trim(preg_replace( '/("|:|<.+>)/', "", imap_utf8($oMessage->from) ));
     $aValues["date"] = $oMessage->date;
+    $aValues["server"] = $_SERVER['SERVER_NAME'];
+    @$aValues["proto"] = $_SERVER['SERVER_HTTPS'] ? "https" : "http";
+    $aValues["port"] = $_SERVER['SERVER_PORT'];
     $aValues["size"] = $oMessage->size;
     $aValues["shortdate"] = strftime("%a %d %H:%M", strtotime($oMessage->date));
     return $aValues;
   } // getValues }}}
 
-  function messageList( $szTemplate, $nBound = 30 ) { // {{{ render message list
+  function messageList( $nBound = 30 ) { // {{{ message list
+    $aMessages = imap_headers( $this->m_oMailbox );
+    $aMessages = imap_fetch_overview( $this->m_oMailbox, "1:" . count($aMessages) );
+
+    // Sort messages by descending time
+    uasort($aMessages, array($this, "timeSortHelper"));
+    $aBuffer = array();
+    $nIndex = 0;
+    if( $aMessages != false ) {
+      foreach( $aMessages as $oMessage ) {
+        // We might have other clients accessing the mailbox, so ignore
+        // messages flagged as deleted
+        if( $oMessage->deleted != 1 ) {
+          $aBuffer[$oMessage->uid] = $oMessage;
+          if( $nIndex > $nBound ) // limit listing length
+            return $aBuffer;
+        }
+      }
+    }
+    return $aBuffer;
+  } // messageList }}}
+
+  function getNextMessage( $szUid ) { // {{{ get next UID
+    $aMessages = $this->messageList();
+    $aFirst = each($aMessages);
+    reset($aMessages);
+    while( $aMessages ) {
+      $oIndex = array_shift($aMessages);
+      if( intval($oIndex->uid) == intval($szUid) ) {
+        $oIndex = array_shift($aMessages);
+        return $oIndex->uid;
+      }
+    }
+    return $aFirst->uid;
+  } // getNextMessage }}}
+
+  function renderMessageList( $szTemplate, $nBound = 30 ) { // {{{ render message list
+    $szBuffer = "";
+    $this->readTemplate( $szTemplate );
+    $aMessages = $this->messageList( $nBound );
+    
+    $nIndex = 0;
+    if( $aMessages != false ) {
+      foreach( $aMessages as $oMessage ) {
+        $nIndex++;
+        $aValues = $this->getValues( $oMessage );
+        $aValues["row_class"] = $nIndex % 2 ? "odd" : "even";
+        $szBuffer .= $this->replaceValues($aValues);
+        if( $nIndex > $nBound ) // limit listing length
+          return $szBuffer;
+      }
+    }
+    return $szBuffer;
+  } // renderMessageList }}}
+
+  function messageContentList( $szTemplate, $nBound = 30 ) { // {{{ render message list
     $this->readTemplate( $szTemplate );
     $szBuffer = "";
     $aMessages = imap_headers( $this->m_oMailbox );
@@ -156,6 +206,8 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
           $nIndex++;
           $aValues = $this->getValues( $oMessage );
           $aValues["row_class"] = $nIndex % 2 ? "odd" : "even";
+          $aMsg = $this->getMessage( $oMessage->uid, FT_UID | FT_PEEK );
+          $aValues["body"] = htmlspecialchars(str_replace('src="', 'src="http://no-bolso.com/wap/feeds/body.php/' . $oMessage->uid . "/view/", $aMsg["body"]));
           $szBuffer .= $this->replaceValues($aValues);
           if( $nIndex > $nBound ) // limit listing length
             return $szBuffer;
@@ -165,12 +217,12 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
     return $szBuffer;
   } // messageList }}}
   
-  function getMessage( $szUid ) { // {{{ get a single HTML message
+  function getMessage( $szUid, $nFlags = FT_UID ) { // {{{ get a single HTML message 
     $szBuffer = "";
-    $oStructure = imap_fetchstructure( $this->m_oMailbox, $szUid, FT_UID );
+    $oStructure = imap_fetchstructure( $this->m_oMailbox, $szUid, $nFlags );
     if( !$oStructure )
       redirect();
-    list($aHeaders) = imap_fetch_overview( $this->m_oMailbox, $szUid, FT_UID );
+    list($aHeaders) = imap_fetch_overview( $this->m_oMailbox, $szUid, $nFlags );
     $aHeaders = array_merge($aHeaders, $this->getValues($aHeaders));
     
     // There are only two newspipe MIME structures: with or without images.
@@ -178,14 +230,14 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
     foreach( $oStructure->parts as $key => $val ) {
       if( $val->subtype == 0) {
         if(strtolower($val->subtype) == "html") {
-          $szBuffer = quoted_printable_decode(imap_fetchbody( $this->m_oMailbox, $szUid, $key+1,  FT_UID));
+          $szBuffer = quoted_printable_decode(imap_fetchbody( $this->m_oMailbox, $szUid, $key+1,  $nFlags ));
         }
         else if(strtolower($val->parts[0]->subtype) == "html" ) {
-          $szBuffer = quoted_printable_decode(imap_fetchbody( $this->m_oMailbox, $szUid, $key+1 . ".1",  FT_UID));
+          $szBuffer = quoted_printable_decode(imap_fetchbody( $this->m_oMailbox, $szUid, $key+1 . ".1", $nFlags ));
         }
       }
     }
-    $szBuffer = preg_replace( "/cid:/", "", $szBuffer );
+    $szBuffer = preg_replace( '/cid:(.+)"/', "body.php?uid=$szUid&param=" . '$1', $szBuffer );
     // Remove image sizes from HTML sent to WAP/PDA browsers
     $oProfile = new CProfileManager();
     if( $oProfile->getScreenSize() ) {
@@ -196,26 +248,27 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
                         array( "body" => $szBuffer )));
   } // getMessage }}}
   
-  function getNamedPart( $szUid, $szPart ) { // {{{ get a specific part (image)
+  function getNamedPart( $szUid, $szPart, $nFlags = FT_UID ) { // {{{ get a specific part (image)
     global $gaIMAPTypes;
-    $oStructure = imap_fetchstructure( $this->m_oMailbox, $szUid, FT_UID );
+    list($aHeaders) = imap_fetch_overview( $this->m_oMailbox, $szUid, $nFlags );
+    $oStructure = imap_fetchstructure( $this->m_oMailbox, $szUid, $nFlags );
     // Brutally hard-coded for new newspipe MIME structure. Soft-fails with
     // a warning message.
     $nParts = count($oStructure->parts);
     $oBranch = $oStructure->parts[$nParts-1]->parts;
     foreach( $oBranch as $key => $val) {
       if( @strpos($val->id, $szPart) ) {
-        $szContent = trim(base64_decode( imap_fetchbody( $this->m_oMailbox, $szUid, "$nParts." . ($key+1), FT_UID ) ));
+        $szContent = trim(base64_decode( imap_fetchbody( $this->m_oMailbox, $szUid, "$nParts." . ($key+1), $nFlags ) ));
         $szSubtype = strtolower($val->subtype);
         $szSupertype = strtolower($gaIMAPTypes[$val->type]);
         $szType = strtolower( $szSupertype . "/" . $szSubtype);
-        audit( E_DEBUG, "MIME Type is $szType" );
+        @audit( E_DEBUG, "MIME Type is $szType" );
         if( ( $szSupertype == "image" ) && RESIZE_IMAGES ) {
           // Resize images for WAP/PDA browsers
           $oProfile = new CProfileManager();
           $szSize = $oProfile->getScreenSize();
           if( $szSize ) {
-            audit( E_DEBUG, "Screen size is $szSize" );
+            @audit( E_DEBUG, "Screen size is $szSize" );
             list( $x, $y ) = split( "x", $szSize );
             $x = $x - 8; // allow for scroll bars in phones
             // May not work on GIFs depending on your PHP
@@ -234,6 +287,12 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
                 else 
                   $bRotate = false;
               } // }}}
+    global $gaProfileOverrides; // This should be cleaned up and become a parameter
+    foreach( $gaProfileOverrides as $szUserAgent => $aOverrides ) {
+      if(preg_match($szUserAgent, $_SERVER['HTTP_USER_AGENT']))
+        $bRotate = $aOverrides["rotate"];
+    }
+              
               if( $bRotate ) { // {{{ rotate image (around its center)
                 $c = imagecreatetruecolor(max($sx, $sy), max($sx, $sy));
                 imagecopy( $c, $i, 0,0,0,0, $sx, $sy );
@@ -265,7 +324,7 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
                     } 
                   }
                 } // }}}
-                audit( E_DEBUG, sprintf( "Projected (original) image size: %dx%d (%dx%d)", $x, $y, $ox, $oy ) );
+                @audit( E_DEBUG, sprintf( "Projected (original) image size: %dx%d (%dx%d)", $x, $y, $ox, $oy ) );
 
                 $n = imagecreatetruecolor( $x, $y );
                 imagecopyresampled( $n, $r, 0,0,$offset,0, $x,$y,$sx,$sy );
@@ -279,13 +338,13 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
                 else
                   $szType = "image/png";
                 $szContent=ob_get_contents();
-                audit( E_DEBUG, "Generated JPEG with " . strlen( $szContent ) . " bytes" );
+                @audit( E_DEBUG, "Generated JPEG with " . strlen( $szContent ) . " bytes" );
                 ob_end_clean();
               }
             }
           }
         }
-        return array( $szType, strlen($szContent), $szContent );
+        return array( $szType, strlen($szContent), $szContent, strtotime($oMessage->date) );
       }
     }
   } // getNamedPart }}}
@@ -307,6 +366,9 @@ class CIMAPWrapper extends CTemplate { // {{{ IMAP transaction wrapper
   } // moveToTrash }}}
 } // CIMAPWrapper }}}
 
+
+// Authentication
+
 class CAuthenticator { // {{{
   var $m_szRealm;
   var $m_aAuthData;
@@ -322,18 +384,20 @@ class CAuthenticator { // {{{
   function checkPrivileges() { // {{{
     $aLevels = array();
     if( is_array($this->m_aACL) ) {
-      audit( E_INFO, "[Auth] Checking ACL" );
+      @audit( E_INFO, "[Auth] Checking ACL" );
       foreach( $this->m_aACL as $aEntry ) {
         $aPrivileges = split( ",", array_shift( $aEntry ) );
         $nConditions = 0; 
         foreach( $aEntry as $szEnv => $szVal ) {
           if( $szEnv == "action" )
             continue;
-          audit( E_DEBUG, "[Auth] $szEnv(" . $_SERVER[$szEnv] . ") => $szVal" );
-          if( preg_match( "$szVal", $_SERVER[$szEnv] ) ) {
+          @audit( E_DEBUG, "[Auth] $szEnv(" . $_SERVER[$szEnv] . ") => $szVal" );
+          if( $szEnv == "PHP_AUTH_USER" && $this->login() )
             $nConditions++;
-            if( ($szEnv == "PHP_AUTH_USER") && !$this->login() )
-              $nConditions--;
+          elseif( isset($_SERVER[$szEnv]) ) {
+            if( preg_match( "$szVal", $_SERVER[$szEnv] ) ) {
+              $nConditions++;
+            }
           }
         }
         // did we match all conditions?
@@ -343,69 +407,50 @@ class CAuthenticator { // {{{
         }
       }
     }
-    audit( E_DEBUG, "[Auth] " . serialize( $aLevels ) );
+    @audit( E_DEBUG, "[Auth] Assembled levels: " . serialize( $aLevels ) );
     return $aLevels;
   } // checkPrivileges }}}
 
   function auth() { // {{{
-    // If we got here, we need authentication:
-    audit( E_INFO, "[Auth] Sending HTTP Auth request" );
+    @audit( E_INFO, "[Auth] Sending HTTP Auth request" );
     header('WWW-Authenticate: Basic realm="' . $this->m_szRealm . '"');
     header( $_SERVER["SERVER_PROTOCOL"] . ' 401 Unauthorized');
-    header('status: 401 Unauthorized');
-    // caller will be responsible for outputting content
+    header( 'status: 401 Unauthorized');
+    exit;
   } // auth }}}
 
   function deny( $szMessage = "<h1>401 Unauthorized</h1>", $szDigest = "Invalid Credentials" ) { // {{{
     header( $_SERVER["SERVER_PROTOCOL"] . ' 401 Unauthorized');
     header( "X-Reason: $szDigest" );
+    echo( '<a href="index.php?action=logout">Reset session</a>' );
     echo "$szMessage\n$szDigest";
     exit;
   } // deny }}}
 
   function logout() { // {{{
-    audit( E_INFO, "[Auth] Clearing login cookie" );
-    $nResult = setcookie( LOGIN_COOKIE, "", time()-3600 );
-    if( !$nResult )
-      audit( E_WARNING, ANSI_YELLOW . "[Auth]" . ANSI_NORMAL . " setcookie() returned $nResult" );
+    @session_destroy();
   } // }}}
 
   function login() { // {{{
     @$szUsername = $_SERVER["PHP_AUTH_USER"];
     @$szPassword = $_SERVER["PHP_AUTH_PW"];
-    @$szCookie   = $_COOKIE[LOGIN_COOKIE];
 
-    if($szCookie=="") {
-      $nResult = setcookie( LOGIN_COOKIE, "true" );
-      if( !$nResult )
-        audit( E_WARNING, ANSI_YELLOW . "[Auth]" . ANSI_NORMAL . " setcookie() returned $nResult" );
-      $this->auth();
-      return false;
-    }
+    if( isset($_SESSION["Login"]) )
+      return true;
 
-    if( $szCookie && $szUsername ) {
+    if( $szUsername != "" ) {
       if( $this->m_aAuthData[$szUsername] == md5($szPassword) ) {
-        audit( E_INFO, "[Auth] $szUsername is authenticated." );
         $this->m_szUsername = $szUsername;
+        @audit( E_INFO, "[Auth] Accepted Authentication for $szUsername." );
+        $_SESSION["Login"] = true;
         return true;
       }
       else {
-        audit( E_WARNING, ANSI_YELLOW . "[Auth]" . ANSI_NORMAL . " Rejected Authentication for $szUsername - bad password." );
+        @audit( E_WARNING, ANSI_YELLOW . "[Auth]" . ANSI_NORMAL . " Rejected Authentication for $szUsername." );
         return false;
       }
     }
-    elseif( $szUsername ) {
-      if( $this->m_aAuthData[$szUsername] == md5($szPassword) ) {
-        audit( E_INFO, "[Auth] Accepted Authentication for $szUsername." );
-        $this->m_szUsername = $szUsername;
-        return true;
-      }
-      else {
-        audit( E_WARNING, ANSI_YELLOW . "[Auth]" . ANSI_NORMAL . " Rejected Authentication for $szUsername." );
-        return false;
-      }
-    }
-    return true;
+    $this->auth();
   } // }}}  
 
   function checkACL( $szName ) { // {{{
@@ -465,6 +510,11 @@ class CProfileManager { // {{{
   } // }}}
 
   function getScreenSize() {
+    global $gaProfileOverrides; // This should be cleaned up and become a parameter
+    foreach( $gaProfileOverrides as $szUserAgent => $aOverrides ) {
+      if(preg_match($szUserAgent, $_SERVER['HTTP_USER_AGENT']))
+        return $aOverrides["size"];
+    }
     return $this->m_aData[$this->m_szURL]["screensize"];
   } 
   
@@ -477,11 +527,11 @@ class CProfileManager { // {{{
 // ----------------------------------------------------------------------
 
 function audit( $nLevel, $szMessage, $nType = FAULT_SYSLOG, $szDestination = "", $szHeaders = "" ) {
-  if( $nLevel & LOG_LEVEL ) {
+  if( $nLevel && LOG_LEVEL ) {
     $szMessage = "[" . $_SERVER["REMOTE_ADDR"] . ":" . $_SERVER["REMOTE_PORT"] . "->" . $_SERVER["SERVER_ADDR"] . ":" . $_SERVER["SERVER_PORT"] . "] " . "[" . APPLICATION_NAME . "] $szMessage";
     if( !ANSI_LOGS )
       $szMessage = ereg_replace( "\033\[[0-9]+m", "", $szMessage );
-    error_log( $szMessage, $nSeverity, $szDestination, $szHeaders );
+    @error_log( $szMessage, $nSeverity, $szDestination, $szHeaders );
   }
 } // audit }}}
 

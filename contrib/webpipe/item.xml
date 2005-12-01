@@ -5,6 +5,6 @@
 <pubDate>$date</pubDate>
 <source>$from</source>
 <description>
-Size: $size bytes, Flag: $flag, Read: $read, Date: $shortdate 
+$body
 </description>
 </item>
