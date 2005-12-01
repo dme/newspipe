@@ -1,7 +1,7 @@
 <item>
 <title>$subject</title>
-<link>$url/body.php/$uid/view/</link>
-<guid>$url/body.php/$uid/view/</guid>
+<link>$url/body.php?uid=$uid&action=view</link>
+<guid>$url/body.php?uid=$uid&action=view</guid>
 <pubDate>$date</pubDate>
 <source>$from</source>
 <description>
