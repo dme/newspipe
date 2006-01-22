@@ -2,18 +2,18 @@
 # -*- coding: UTF-8 -*-
 
 # $NoKeywords: $   for Visual Sourcesafe, stop replacing tags
-__revision__ = "$Revision: 1.66 $"
+__revision__ = "$Revision: 1.67 $"
 __revision_number__ = __revision__.split()[1]
 __version__ = "1.1.9"
-__date__ = "2005-07-17"
+__date__ = "2005-07-03"
 __url__ = "http://newspipe.sourceforge.net"
 __author__ = "Ricardo M. Reyes <reyesric@ufasta.edu.ar>"
 __contributors__ = ["Rui Carmo <http://the.taoofmac.com/space/>", "Bruno Rodrigues <http://www.litux.org/blog/>"]
-__id__ = "$Id: newspipe.py,v 1.66 2005/07/18 00:23:28 reyesric Exp $"
+__id__ = "$Id: newspipe.py,v 1.67 2006/01/22 21:41:48 reyesric Exp $"
 
 ABOUT_NEWSPIPE = """
 newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
-"""%(__version__, __revision_number__, __date__.split('-')[0], __author__) 
+"""%(__version__, __revision_number__, __date__.split('-')[0], __author__)
 
 #import psyco
 #psyco.full()
@@ -49,6 +49,7 @@ import logging.handlers
 from urllib2 import URLError
 from email import message_from_string
 import gc
+import socket
 
 try:
     import threading as _threading
@@ -62,6 +63,7 @@ try:
     from html2text import *
 except ImportError:
     has_html2text = False
+    
 
 PYTHON_VERSION = '.'.join([str(x) for x in sys.version_info])
 USER_AGENT = 'NewsPipe/'+__version__+' rev.'+__revision_number__+' Python: '+ PYTHON_VERSION+' Platform: '+sys.platform +' / '+__url__
@@ -114,7 +116,7 @@ class MyLog:
     h = None         # file handler
     result = None    # memory string
     lasttime = None  # last access to the file
-        
+
     #def die(self): self.h.close()
 
     def memory(self):
@@ -124,7 +126,7 @@ class MyLog:
                 self.lasttime = time.time() - self.cache - 1
             if self.lasttime + self.cache >= time.time():
                 return self.result
-    
+
             if not self.h:
                 self.h=file("/proc/self/status")
             else:
@@ -150,7 +152,7 @@ class MyLog:
           return ''
         # end if
     # end def
-    
+
     def debug(self, msg, *args, **kwargs):
         msg = self.memory() + msg
         log.debug(msg, *args, **kwargs)
@@ -176,7 +178,7 @@ def LogFile(stderr=True, name='default', location='.', debug=False):
     hdlr = logging.handlers.RotatingFileHandler(os.path.join(location, name+'.log'), maxBytes=1024*500, backupCount=10)
     formatter = logging.Formatter('%(asctime)s %(thread)d %(levelname)-10s %(message)s')
     hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr) 
+    logger.addHandler(hdlr)
 
     if stderr:
         hdlr = logging.StreamHandler(sys.stderr)
@@ -191,15 +193,15 @@ def LogFile(stderr=True, name='default', location='.', debug=False):
     # end if
 
     return logger
-# end def    
+# end def
 
 def parseTime (text):
     AM = 1
     PM = 2
     UNKNOWN = 3
-    
+
     text = text.lower()
-    
+
     if 'am' in text:
         ampm = AM
         text = text.replace('am', '')
@@ -208,12 +210,12 @@ def parseTime (text):
         text = text.replace('pm', '')
     else:
         ampm = UNKNOWN
-        
+
     text = text.strip()
     partes = text.split(':')
     if len(partes) == 1:
         partes.append('0')
-        
+
     try:
         hours = int(partes[0])
         minutes = int(partes[1])
@@ -222,48 +224,48 @@ def parseTime (text):
 
     if ampm == PM:
         hours = hours + 12
-    
+
     return (hours, minutes)
-    
+
     return None
 
 def parseTimeRange (text):
     begin, end = None, None
-    
+
     text = text.strip()
-    
+
     separadores = [x for x in (' , ; to = / | -').split(' ') if x]
     separadores.append(' ')
-    
+
     partes = None
     for each in separadores:
         aux = text.split(each)
         if len(aux) == 2:
             partes = aux
-    
+
     if partes:
         partes = [x.strip() for x in partes]
         begin = parseTime(partes[0])
         end = parseTime(partes[1])
         if begin and end:
             return (begin, end)
-    
+
     return None
-    
+
 def checkTime (range):
     n = datetime.now()
     hours = n.hour
     minutes = n.minute
-    
+
     begin = range[0][0]*100 + range[0][1]
     end =   range[1][0]*100 + range[1][1]
     current = hours*100 + minutes
-    
+
     if end < begin:
         end += 2400
-    
+
     result = begin <= current <= end
-    
+
     return result
 
 def formatNumber (text):
@@ -287,7 +289,7 @@ def nameEnt(m):
     m = m.groups(1)[0]
     if m in entitydefs.keys():
         return entitydefs[m].decode("latin1")
-    else: 
+    else:
         return "&"+m+";"
     # end if
 
@@ -392,14 +394,14 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, 
     if isinstance(text, unicode):
         text = text.encode('utf-8')
     # end if
-    
+
     if not isinstance(html, unicode):
         html = html.decode('latin1')
     # end if
     if isinstance(html, unicode):
         html = html.encode('utf-8')
     # end if
-    
+
     out = cStringIO.StringIO() # output buffer for our message
     htmlin = cStringIO.StringIO(html)
     txtin = cStringIO.StringIO(text)
@@ -425,7 +427,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, 
     #
     writer.startmultipartbody("alternative")
     writer.flushheaders()
-    
+
     #
     # the plain text section
     #
@@ -436,7 +438,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, 
         mimetools.encode(txtin, pout, 'quoted-printable')
         pout.write (txtin.read())
         txtin.close()
-    
+
     #
     # start the html subpart of the message
     #
@@ -469,7 +471,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, 
                         # end if
                     # end if
                 # end if
-                
+
                 if link:
                     # if the url is relative, then add the link url to form an absolute address
                     url_parts = urlparse.urlsplit(x['url'])
@@ -480,7 +482,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, 
                     # end if
                 # end if
                 x['url'] = x['url'].replace(' ', '%20')
-            
+
                 retries = 0;
                 MAX_RETRIES = 3;
                 img_referer = link
@@ -513,11 +515,11 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, 
                     except Exception:
                         raise # any other exception, kick it up, to be handled later
                     else:
-                        # if there's no exception, break the loop to continue 
+                        # if there's no exception, break the loop to continue
                         # processing the image
                         break
                     # end try
-                            
+
                     mylog.info ('Retrying, %d time' % retries);
                 # end while
 
@@ -566,7 +568,7 @@ def createhtmlmail (html, text, headers, images=None, rss_feed=None, link=None, 
         # end for
         htmlpart.lastpart()
     # end if
-    
+
     #
     # the feed section
     #
@@ -593,10 +595,10 @@ def createTextEmail(text, headers, encoding='utf-8'):
     t += '\r\n\r\n'
     t += text
     return message_from_string(t.encode(encoding, 'replace'))
-# end def    
+# end def
 
 
-def quitarEntitys (text):   
+def quitarEntitys (text):
     return re.sub(r'(&\D+?;)', '', text)
 
 
@@ -644,7 +646,7 @@ def getEntity(m):
 def SanitizeText (text):
 
     text = text.replace('\n', ' ')
-    
+
     entitys = entitydefs
     inverso = {}
     for i,j in entitys.items():
@@ -657,7 +659,7 @@ def SanitizeText (text):
                 text = text.replace(c, inverso[c])
             else:
                 text = text.replace(c, '')
-    
+
 
     text = re.sub(r'&#(\d+);', getEntity, text)
     return text
@@ -719,7 +721,7 @@ semaforo_html2text = _threading.BoundedSemaphore()
 def makeHeader(text):
     if not text:
         text = ''
-    
+
     if not isinstance(text, unicode):
         text = text.decode('latin1')
     # end if
@@ -727,7 +729,7 @@ def makeHeader(text):
     if isinstance(text, unicode):
         text = text.encode('utf-8')
     # end if
-    
+
     try:
         if has_html2text:
             text = html2text(text).strip()
@@ -735,7 +737,7 @@ def makeHeader(text):
         pass
 
     return str(email.Header.make_header([(text, 'utf-8')]))
-# end def    
+# end def
 
 
 def getPlainText(html, links=True):
@@ -764,13 +766,13 @@ def getPlainText(html, links=True):
     # end if
 
     return plain_text
-# end def    
+# end def
 
 def md5texto(texto):
     m = md5.new()
     m.update (texto)
     return m.hexdigest()
-# end def    
+# end def
 
 
 class Item:
@@ -827,7 +829,7 @@ class Item:
                 self.texto_nuevo = downloaded_file.content.read()
             # end if
         # end if
-        
+
         if remove:
             rc = re.compile (remove, re.I+re.S+re.X)
             self.texto_nuevo = re.sub(rc, '', self.texto_nuevo)
@@ -859,7 +861,7 @@ class Item:
         m.update (channel.xmlUrl)
         m.update (self.subject.encode('utf-8', 'replace'))
         self.urlHash = m.hexdigest()
-        
+
         self.subject = self.subject
 
         if 'modified_parsed' in original.keys() and original['modified_parsed'] != None:
@@ -873,17 +875,17 @@ class Item:
         if channel.diff and historico_posts.has_key(self.urlHash):
             before_diff = self.texto_nuevo
             differ = TextDiff(historico_posts[self.urlHash]['text'], self.texto_nuevo)
-           
+
             self.texto = differ.getDiff()
             if self.texto <> before_diff:
                 self.timestamp = datetime.now()
         # end if
-        
+
         self.channel = channel
 
         self.creatorName = GetValue(original.get('creator', original.get('author', channel.creator)))
         # set the default From: address to "rss@domain" where domain comes from the site's url
-        self.creatorEmail = 'rss@'+ urlparse.urlparse(channel.htmlUrl)[1] 
+        self.creatorEmail = 'rss@'+ urlparse.urlparse(channel.htmlUrl)[1]
 
         # search for an email address, in the item first, then in the channel
         r = re.compile('([A-Za-z0-9_.\+]+@[A-Za-z0-9_.]+)')
@@ -894,9 +896,9 @@ class Item:
                     self.creatorEmail = m.group(1)
             except TypeError:
                 pass
-              
+
         self.is_modified = 'Unknown'
-        
+
         self.custom_tags = {}
         known_tags = ['text', 'link', 'htmlUrl', 'xmlUrl', 'description', 'path', 'title', 'index'] + OPML_DEFAULTS.keys()
         for k in channel.parameters.keys():
@@ -931,7 +933,7 @@ class Item:
         body = self.texto
         text_version = getPlainText (body)
         text_version = text_version + "\n\n" + "Home: [" + self.channel.htmlUrl + "]\n" + "Link: [ " + self.link + " ]\n"
-        
+
         if self.enclosures:
             for enclosure in self.enclosures:
                 text_version = text_version + "Enclosure: [ " + enclosure.get('url') + "  (" + formatNumber(enclosure.get('length', '0')) + ") ]\n"
@@ -943,18 +945,18 @@ class Item:
         html_version = html_version.replace('__body__', body)
         html_version = html_version.replace('__permalink__', self.link)
         html_version = html_version.replace('__htmlUrl__', self.channel.htmlUrl)
-        
+
         enclosure_text = ""
         if self.enclosures:
             for enclosure in self.enclosures:
                 enclosure_text = enclosure_text + "<a href=\"" + enclosure.get('url') + "\"> Enclosure (" + formatNumber(enclosure.get('length', '0')) + ")</a>&nbsp;&nbsp;&nbsp;"
             # end for
         #ed if
-                
+
         html_version = html_version.replace('__enclosure__', enclosure_text)
-        
+
         img_search_re = re.compile('<.*?img.+?src.*?=.*?[\'"](.*?)[\'"]', re.IGNORECASE)
-        
+
         # edit all the image urls that are relative to make them fully qualified
         if self.link:
             urls = re.findall(img_search_re, html_version)
@@ -1002,12 +1004,12 @@ class Item:
         if envio == None:
             envio = destinatario[1]
         # end if
-        
+
         if subject_prefix:
             subject = subject_prefix + ': ' + self.subject
         else:
             subject = self.subject
-            
+
         to_header = ', '.join(['"%s" <%s>"' % (destinatario[0], each.strip()) for each in destinatario[1].split(',')])
         if from_address:
             from_header = from_address
@@ -1028,7 +1030,7 @@ class Item:
         headers += [('X-Channel-description', makeHeader(self.channel.description)),]
         headers += [('List-Id', '%s <%s>' % ( makeHeader(self.channel.title), self.channel.xmlUrl)),]
         headers += [('Content-Location', self.link),]
-        
+
         for k in self.custom_tags.keys():
             headers += [('X-Custom-'+k, makeHeader(self.custom_tags[k])),]
 
@@ -1044,7 +1046,7 @@ class Item:
             if images:
                 for each in images:
                     headers.append (('X-Image-'+each['name'], each['url']))
-       
+
         lastid = historico_feeds[self.channel.xmlUrl].get("lastid", "")
         if lastid == "":
             m = md5.new()
@@ -1054,17 +1056,17 @@ class Item:
         else:
             refid = lastid.split()[-1]
         # endif
-       
-        if include_threading:      
+
+        if include_threading:
             headers += [('In-Reply-To', refid),]
             headers += [('References', lastid),]
- 
+
         if historico_feeds[self.channel.xmlUrl].has_key("lastid"):
             historico_feeds[self.channel.xmlUrl]["lastid"] = " ".join( (historico_feeds[self.channel.xmlUrl]["lastid"] + " " + msgid).split()[-4:] )
         else:
             historico_feeds[self.channel.xmlUrl]["lastid"] = refid + " " + msgid
         historico_feeds["modified"]=True
- 
+
         if format == "plaintext":
             return createTextEmail (text_version, headers, encoding)
         else:
@@ -1107,14 +1109,14 @@ def LeerConfig():
     parser.add_option("", "--procmail", dest="procmail", help="Path of the procmail script, used when SEND_METHOD=PROCMAIL or BOTH")
     parser.add_option("", "--reverse", action="store_const", const="1", dest="reverse", help="reverse the order of emails as they are sent")
 
-    
+
     (options, args) = parser.parse_args()
-    
+
     if options.inifile:
         inifile = options.inifile
     else:
         source_path = os.path.split(sys.argv[0])[0]
-    
+
         for p in ('.', source_path):
             inifile = os.path.join(p, 'newspipe.ini')
             if os.path.exists(inifile):
@@ -1130,108 +1132,133 @@ def LeerConfig():
     for attr in ini.options('NewsPipe'):
         result[attr.lower()] = ini.get('NewsPipe', attr)
     # end for
-    
+
     for key, value in CONFIG_DEFAULTS.items():
         if not key in result.keys():
             result[key] = value
-            
+
     for key in [x.dest for x in parser.option_list]:
         if key:
             value = getattr(options, key)
             if value:
                 result[key] = value
-    
-    if result['proxy']:    
+
+    if result['proxy']:
         if not '://' in result['proxy']:
             result['proxy'] = 'http://' + result['proxy']
         proxy_support = urllib2.ProxyHandler({"http":result['proxy']})
         opener = urllib2.build_opener(proxy_support)
         urllib2.install_opener(opener)
-        
+
     if not (result['send_method'].lower() in ('smtp', 'procmail', 'both')):
         raise ValueError ('The value of the parameter SEND_METHOD must be SMTP, PROCMAIL or BOTH')
-            
+
     return result
 # end def
 
 
 def EnviarEmails(msgs, method, server, auth, auth_user, auth_pass, procmail, reverse):
-    if msgs:
-        if reverse:
-            msgs.reverse()
+    # disable the defaulttimeout to avoid a bug with starttls()
+    # the defaulttimeout will be restored at the end of the method
+    backup_timeout = socket.getdefaulttimeout ()
+    socket.setdefaulttimeout (None)    
+  
+    try:
+        original_msgs = msgs[:]
+        splited_msgs = []
         
-        if method.lower() in ('smtp', 'both'):
-            smtp = smtplib.SMTP(server)
-            # authenticate with SMTP server when there's need to
-            if auth:
-                smtp.login(auth_user,auth_pass);
+        # split the message list in groups of 10 messages
+        aux = []
+        for each in original_msgs:
+            if len(aux) == 10:
+                splited_msgs.append(aux)
+                aux = []
+
+            aux.append(each)
+        if aux:
+            splited_msgs.append(aux)
+        
+        for msgs in splited_msgs:
+            if reverse:
+                msgs.reverse()
     
-            smtp.set_debuglevel(0)
+            if method.lower() in ('smtp', 'both'):
+                smtp = smtplib.SMTP(server)
+                smtp.set_debuglevel(DEBUG)
+                respuesta = smtp.ehlo()
+                mylog.debug(repr(respuesta))
     
-            count = 0;
-            for msg in msgs:
-                if msg == None: 
-                    continue
+                # initiate TLS if necesary
+                if len(respuesta) == 2:
+                    if 'starttls' in respuesta[1].lower():
+                        mylog.debug('Initiating TLS conection')
+                        smtp.starttls()
+                        smtp.ehlo()
+                        mylog.debug(repr(respuesta))
+                        
+                # authenticate with SMTP server when there's need to
+                if auth:
+                    smtp.login(auth_user,auth_pass);
     
-                fromaddr = msg['From']
+                count = 0;
+                for msg in msgs:
+                    if msg == None:
+                        continue
     
-                r = re.compile('<(.+?)>')
-                toaddr = r.findall(msg['To'])
+                    fromaddr = msg['From']
+    
+                    r = re.compile('<(.+?)>')
+                    toaddr = r.findall(msg['To'])
+    
+                    try:
+                        # build envelope and send message
+                        smtp.sendmail(fromaddr, toaddr, msg.as_string(unixfrom=False))
+                        count = count + 1
+                        mylog.debug('mail sent to %s from %s ' % (toaddr, fromaddr))
+                    except:
+                        mylog.exception("Error sending mail")
+                        mylog.error(str(msg))
+                        raise
+                    # end try
+                # end for
     
                 try:
-                    # build envelope and send message
-                    smtp.sendmail(fromaddr, toaddr, msg.as_string(unixfrom=False))
-                    count = count + 1
-                    mylog.debug('mail sent to %s from %s ' % (toaddr, fromaddr))
-                except smtplib.SMTPDataError, e:
-                    mylog.warning("Error sending mail ("+str(e)+")")
-                    mylog.warning(msg)
-                except socket.timeout:
-                    sleep(3)
-                    smtp.sendmail(fromaddr, toaddr, msg)
-                # end try
-    
-                if count % 10 == 0:
-                    # close the connection and reconnect every 10 messages
                     smtp.quit()
-                    smtp = smtplib.SMTP(server)
-                    # authenticate with SMTP server when there's need to
-                    if auth:
-                        smtp.login(auth_user,auth_pass);
+                except socket.sslerror:
+                    pass  # connecting to smtp.gmail.com gives this false error
+    
+                if count != len(msgs):
+                    note = " (" + str(len(msgs)-count) +" failed)"
+                else:
+                    note=""
+                mylog.info ('%d emails sent successfully%s via SMTP' % (count,note,))
+            # end if
+    
+            if method.lower() in ('procmail', 'both'):
+                count = 0
+                for msg in msgs:
+                    try:
+                        fp = os.popen(procmail, 'w')
+                        fp.write(msg.as_string(unixfrom=True))
+                        status = fp.close()
+                    except:
+                        mylog.exception ('IOError executing '+procmail)
+                        status = 1
+                        raise
+    
+                    if status is None:
+                        count += 1
                     # end if
-                # end if
-            # end for
-            
-            smtp.quit()
-            if count != len(msgs):
-                note = " (" + str(len(msgs)-count) +" failed)"
-            else: 
-                note=""
-            mylog.info ('%d emails sent successfully%s via SMTP' % (count,note,))
+                # end for
+                if count != len(msgs):
+                    note = " (" + str(len(msgs)-count) +" failed)"
+                else:
+                    note=""
+                mylog.info ('%d emails sent successfully%s via PROCMAIL' % (count,note,))
+            # end if
         # end if
-        
-        if method.lower() in ('procmail', 'both'):
-            count = 0
-            for msg in msgs:
-                try:
-                    fp = os.popen(procmail, 'w')
-                    fp.write(msg.as_string(unixfrom=True))
-                    status = fp.close()
-                except IOError:
-                    mylog.error ('IOError executing '+procmail)
-                    status = 1
-                
-                if status is None:
-                    count += 1
-                # end if
-            # end for
-            if count != len(msgs):
-                note = " (" + str(len(msgs)-count) +" failed)"
-            else: 
-                note=""
-            mylog.info ('%d emails sent successfully%s via PROCMAIL' % (count,note,))
-        # end if
-    # end if
+    finally:
+        socket.setdefaulttimeout (backup_timeout)    
 # end def
 
 def AgruparItems(lista, titles, encoding, reverse):
@@ -1251,7 +1278,7 @@ def AgruparItems(lista, titles, encoding, reverse):
         # end if
 
         return cmp(tsy,tsx)
-    # end def    
+    # end def
 
     lista.sort (cmpItems)
     if reverse:
@@ -1311,9 +1338,9 @@ def AgruparItems(lista, titles, encoding, reverse):
                 enclosure_text = enclosure_text + "<a href=\"" + enclosure.get('url') + "\"> Enclosure (" + formatNumber(enclosure.get('length', '0')) + ")</a>&nbsp;&nbsp;&nbsp;"
             # end for
         #ed if
-                
+
         html_version = html_version.replace('__enclosure__', '<p>'+enclosure_text+'</p>')
-        
+
         texto += html_version
     # end for
     dicc = {}
@@ -1323,7 +1350,7 @@ def AgruparItems(lista, titles, encoding, reverse):
     if 'modified_parsed' in lista[0].original.keys():
         dicc['modified_parsed'] = lista[0].original['modified_parsed']
     # end if
-    
+
     customs = {}
     for each in lista:
         for k, v in each.custom_tags.items():
@@ -1332,7 +1359,7 @@ def AgruparItems(lista, titles, encoding, reverse):
                     customs[k] += ' '+ v
             else:
                 customs[k] = v
-                
+
     for k,v in customs.items():
         dicc[k] = v
 
@@ -1344,7 +1371,7 @@ def AgruparItems(lista, titles, encoding, reverse):
 def CargarHistoricos(name):
     if isinstance(name, unicode):
         name = name.encode('latin1', 'replace')
-    
+
     data_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/data'))
 
     if not os.path.exists(data_dir):
@@ -1354,7 +1381,7 @@ def CargarHistoricos(name):
         if historico_feeds:
             del(historico_feeds)
         # end if
-    except UnboundLocalError: 
+    except UnboundLocalError:
         pass
 
     try:
@@ -1373,7 +1400,7 @@ def CargarHistoricos(name):
         if historico_posts:
             del(historico_posts)
         # end if
-    except UnboundLocalError: 
+    except UnboundLocalError:
         pass
 
     try:
@@ -1396,11 +1423,14 @@ def CargarHistoricos(name):
 
 
 def GrabarHistorico(dicc, name, extension):
+    print '##########3 ojo al piojo'
+    return
+
     if isinstance(name, unicode):
         name = name.encode('latin1', 'replace')
-        
+
     data_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/data'))
-    
+
     mylog.debug('Saving archive '+name+extension)
     dump(dicc, open(os.path.join(data_dir, name + extension +'.new'), 'w'))
 
@@ -1430,7 +1460,7 @@ def CheckOnline(config):
 
 def GetHomeDir():
     """ Returns the home directory of the current user."""
-    
+
     for name in ('appdata', 'HOME'):
         result = os.environ.get(name, None)
         if result:
@@ -1438,10 +1468,10 @@ def GetHomeDir():
         # end if
     # end for
 
-    # if it can't find the home directory trough environment vars, then 
+    # if it can't find the home directory trough environment vars, then
     # return the path to this script.
     return os.path.split(sys.argv[0])[0]
-# end def    
+# end def
 
 class FeedWorker (_threading.Thread):
     def __init__(self, feeds_queue, email_queue, config, email_destino, movil_destino, semaforo):
@@ -1468,7 +1498,7 @@ class FeedWorker (_threading.Thread):
             if feed is None:
                 break
             # end if
-            
+
             url = feed['xmlUrl']
             try:
                 time = feed.get('check_time', None)
@@ -1528,7 +1558,7 @@ class FeedWorker (_threading.Thread):
                 else:
                     username, password = None, None
                 # end if
-                
+
                 xml = None
                 try:
                     xml = cache.feed_parse(url, config['can_pipe'] == '1', username, password)
@@ -1550,7 +1580,7 @@ class FeedWorker (_threading.Thread):
                     channel = Channel(title, xml['channel'], url, feed['htmlUrl'], feed['download_link'] == '1', feed['diff'] == '1', feed['download_images'] == '1', feed)
                     for elemento in xml['items']:
                         item = channel.NewItem(elemento, xml["encoding"], feed['remove'])
-                        
+
 #                         for k in item.keys():
 #                             mylog.debug('Key: ' + str(k))
 
@@ -1598,7 +1628,7 @@ class FeedWorker (_threading.Thread):
                      format = "multipart"
                 if((config['textonly'] == '1') or (feed['textonly'] == '1')):
                     format = "plaintext"
-                    
+
                 encoding = config['encoding']
                 include_threading = config['threading'] == '1'
                 subject_prefix = config['subject']
@@ -1610,7 +1640,7 @@ class FeedWorker (_threading.Thread):
                 # second pass for mobile copy, provided we could send the first one
                 if( (feed['mobile'] == '1' ) and movil_destino and email_ok ):
                     send = False
-                    
+
                     time = feed.get('mobile_time', None)
                     if time:
                         parsed_time = parseTimeRange(time)
@@ -1619,7 +1649,7 @@ class FeedWorker (_threading.Thread):
                                 send = True
                         else:
                             mylog.error ('Error parsing the time range "%s" in the feed %s' % (time, url))
-                    
+
                     if send:
                         for item in items:
                             self.email_queue.put(item.GetEmail(envio, movil_destino, "plaintext", encoding, include_threading, subject_prefix))
@@ -1657,27 +1687,27 @@ def setPriority (priority):
     # 0 = Low priority
     # 1 = Normal priority
     # 2 = High priority
-    
+
     if priority == 1:
         pass
     elif priority == 2:
         raise NotImplementedError('High priority mode not implemented yet')
     elif priority == 0:
         if sys.platform.lower().startswith('win'):
-            try: 
+            try:
                 import ctypes
                 kernel32 = ctypes.windll.kernel32
                 thread = kernel32.GetCurrentThread()
                 kernel32.SetThreadPriority(thread, -15)
                 log.debug ("Thread priority lowered.")
-            except ImportError: 
+            except ImportError:
                 log.error ('CTypes module is not available. The parameter "priority" will be ignored')
                 pass
         else:
             raise NotImplementedError ('Priority settings only implemented in Windows')
     else:
         raise ValueError ('The parameter "priority" has an invalid value (%d)' % priority)
-    
+
 
 def MainLoop():
     global historico_posts
@@ -1693,10 +1723,10 @@ def MainLoop():
         config = LeerConfig()
 
         DEBUG = config['debug'] == '1'
-    
+
         if not log:
             log_dir = os.path.normpath(os.path.join(GetHomeDir(), '.newspipe/log'))
-            log = LogFile(config['log_console']  == '1', 'newspipe', log_dir, DEBUG)        
+            log = LogFile(config['log_console']  == '1', 'newspipe', log_dir, DEBUG)
         # end if
         gc.collect()
 
@@ -1713,7 +1743,7 @@ def MainLoop():
                 mylog.debug ('%s: %s', x, y)
             # end for
             mylog.debug ('-'*30)
-            
+
             setPriority (int(config['priority']))
 
             cache.offline = config['offline'] == '1'
@@ -1725,7 +1755,7 @@ def MainLoop():
 
             if CheckOnline(config):
                 NUM_WORKERS = int(config['workers'])
-                
+
                 if not has_threading:
                     log.warning ('Running without threads support')
                     NUM_WORKERS = 1
@@ -1739,7 +1769,7 @@ def MainLoop():
                         if os.path.exists (os.path.join(p, archivo)):
                             archivo = os.path.join(p, archivo)
                             break
-                            
+
                     fp = cache.urlopen(archivo, max_age=60, can_pipe=False).content
                     opml = AplanarArbol(ParseOPML(fp), OPML_DEFAULTS)
                     mylog.debug ('Processing file: '+archivo)
@@ -1761,7 +1791,7 @@ def MainLoop():
                         name = opml['head'].get('fromName', 'Newspipe')
                         from_address = name.strip('"') + ' <' + opml['head']['fromEmail'] + '>'
                         config['from_address'] = from_address
-                        
+
                     if not historico_feeds or not historico_posts:
                         historico_feeds, historico_posts = CargarHistoricos(opml['head']['title'])
 
@@ -1792,7 +1822,7 @@ def MainLoop():
                     log.debug ('Waiting for all the threads to finish')
                     for w in workers:
                         w.join()
-                    # end for                
+                    # end for
 
                     log.debug ('Extracting the emails from the results queue')
                     emails = []
@@ -1807,29 +1837,31 @@ def MainLoop():
 
                     try:
                         EnviarEmails (emails, config['send_method'], config['smtp_server'], config['smtp_auth'] == '1',config['smtp_user'],config['smtp_pass'], config['procmail'], config['reverse'] == '1')
-                    except KeyboardInterrupt:
-                        raise
-                    except Exception, e:
+                        mensajes_enviados = True
+                    except:
                         mylog.exception ('Unhandled exception while sending emails')
+                        mensajes_enviados = False
                     # end try
 
                     mylog.debug (archivo + ' finished.')
 
-                    # borrar las entradas del historico que son demasiado viejas
-                    for hash, value in historico_posts.items():
-                        if hash == 'modified':
-                            continue
-                        timestamp = value['timestamp']
-                        delta = timedelta(days = 30) # borrar lo que tenga mas 30 dias de antiguedad - maybe this should be configurable too
-                        if (datetime.now() - delta) > timestamp:
-                            del historico_posts[hash]
-                            historico_posts['modified'] = True
-                        # end if
-                    # end for
-                    if historico_posts['modified']:
-                        GrabarHistorico (historico_posts, opml['head']['title'], '.posts')
-                    if historico_feeds['modified']:
-                        GrabarHistorico (historico_feeds, opml['head']['title'], '.feeds')
+                    if mensajes_enviados:
+                        # borrar las entradas del historico que son demasiado viejas
+                        for hash, value in historico_posts.items():
+                            if hash == 'modified':
+                                continue
+                            timestamp = value['timestamp']
+                            delta = timedelta(days = 30) # borrar lo que tenga mas 30 dias de antiguedad - maybe this should be configurable too
+                            if (datetime.now() - delta) > timestamp:
+                                del historico_posts[hash]
+                                historico_posts['modified'] = True
+                            # end if
+                        # end for
+                        if historico_posts['modified']:
+                            GrabarHistorico (historico_posts, opml['head']['title'], '.posts')
+                        if historico_feeds['modified']:
+                            GrabarHistorico (historico_feeds, opml['head']['title'], '.feeds')
+                    # end if
                 # end if
             # end if CheckOnline
 
