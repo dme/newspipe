@@ -914,7 +914,6 @@ class Item:
     def GetEmail(self, envio, destinatario, format="multipart", encoding='utf-8', include_threading=False, subject_prefix=None, from_address=None):
         global historico_posts
         template = """
-<font face="Arial,Helvetica,Geneva">
     <p>
         __body__
     </p>
@@ -926,13 +925,12 @@ class Item:
         &nbsp;&nbsp;&nbsp;
         __enclosure__
     </p>
-</font>
 """
         #self.texto = expandNumEntities(self.texto)
 
         body = self.texto
         text_version = getPlainText (body)
-        text_version = text_version + "\n\n" + "Home: [" + self.channel.htmlUrl + "]\n" + "Link: [ " + self.link + " ]\n"
+        text_version = text_version + "\n\n" + "Home: [ " + self.channel.htmlUrl + " ]\n" + "Link: [ " + self.link + " ]\n"
 
         if self.enclosures:
             for enclosure in self.enclosures:
@@ -1892,7 +1890,7 @@ def MainLoop():
 
 
 if __name__ == '__main__':
-    print ABOUT_NEWSPIPE
+    # print ABOUT_NEWSPIPE
 
     log = None
     mylog=MyLog()
