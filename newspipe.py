@@ -1008,7 +1008,7 @@ class Item:
         else:
             subject = self.subject
 
-        to_header = ', '.join(['"%s" <%s>"' % (destinatario[0], each.strip()) for each in destinatario[1].split(',')])
+        to_header = ', '.join(['"%s" <%s>' % (destinatario[0], each.strip()) for each in destinatario[1].split(',')])
         if from_address:
             from_header = from_address
         else:
