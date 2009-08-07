@@ -19,7 +19,7 @@ newspipe.py - version %s revision %s, Copyright (C) 2003-%s \n%s
 #psyco.full()
 
 import ConfigParser
-import md5
+from hashlib import md5
 from time import sleep, time
 import os, sys, os.path
 from cache import *
@@ -622,7 +622,7 @@ class Channel:
 
 def item_checksum(item):
     """ Calculates the MD5 checksum of an rss item """
-    m = md5.new()
+    m = md5()
     for x in item.values():
         m.update (str(x))
     # end for
@@ -769,7 +769,7 @@ def getPlainText(html, links=True):
 # end def
 
 def md5texto(texto):
-    m = md5.new()
+    m = md5()
     m.update (texto)
     return m.hexdigest()
 # end def
@@ -856,7 +856,7 @@ class Item:
             self.subject += '...'
         # end if
 
-        m = md5.new()
+        m = md5()
         m.update (self.link.encode('utf-8', 'replace'))
         m.update (channel.xmlUrl)
         m.update (self.subject.encode('utf-8', 'replace'))
@@ -1047,7 +1047,7 @@ class Item:
 
         lastid = historico_feeds[self.channel.xmlUrl].get("lastid", "")
         if lastid == "":
-            m = md5.new()
+            m = md5()
             m.update (self.channel.xmlUrl)
             refid = "<" + m.hexdigest() + "@rss.example.com>"
             lastid = refid
