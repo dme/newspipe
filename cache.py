@@ -10,7 +10,7 @@ __id__ = "$Id: cache.py,v 1.7 2004/11/21 23:00:48 reyesric Exp $"
 
 from glob import glob
 from pickle import load, dump
-import md5
+from hashlib import md5
 from pprint import pprint
 from datetime import datetime, timedelta
 import os
@@ -106,7 +106,7 @@ class Cache:
         # end if
 
     def checksum(self, texto):
-        m = md5.new()
+        m = md5()
         m.update (texto)
         return m.hexdigest()
     # end def    
